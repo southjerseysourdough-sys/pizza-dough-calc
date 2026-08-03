@@ -6,3 +6,6 @@ next-env.d.ts
 pnpm-lock.yaml
 public
 *.ico
+
+# Vendored React Bits sources, kept diffable against the upstream registry.
+src/components/react-bits/*.tsx
