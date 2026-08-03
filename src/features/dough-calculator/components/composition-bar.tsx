@@ -18,15 +18,15 @@ import { formatIngredientGrams, formatPercentage } from "../utils/format";
 
 /** Each ingredient gets a fixed tone so the bar reads consistently. */
 const KIND_TONE: Record<IngredientKind, string> = {
-  flour: "bg-chart-3",
-  water: "bg-chart-5",
-  starter: "bg-chart-4",
-  salt: "bg-chart-2",
-  fat: "bg-chart-1",
-  sugar: "bg-chart-2",
-  malt: "bg-chart-1",
-  yeast: "bg-chart-4",
-  custom: "bg-chart-2",
+  flour: "bg-acid-lime",
+  water: "bg-mist/80",
+  starter: "bg-fog",
+  salt: "bg-ash",
+  fat: "bg-smoke",
+  sugar: "bg-fog/75",
+  malt: "bg-smoke/80",
+  yeast: "bg-ash/75",
+  custom: "bg-fog/60",
 };
 
 /** Segments thinner than this are invisible, so they are floored to it. */
@@ -58,13 +58,13 @@ export function CompositionBar({ result }: { result: DoughFormulaResult }) {
        */}
       <div
         aria-hidden="true"
-        className="surface-inset flex h-3 w-full gap-px overflow-hidden p-0"
+        className="surface-inset flex h-2 w-full gap-px overflow-hidden p-0"
       >
         {segments.map((segment, index) => (
           <motion.div
             key={segment.id}
             className={cn(
-              "h-full first:rounded-l-md last:rounded-r-md",
+              "h-full first:rounded-l-sm last:rounded-r-sm",
               KIND_TONE[segment.kind]
             )}
             initial={false}

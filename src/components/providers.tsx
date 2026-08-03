@@ -20,7 +20,7 @@ export function Providers({ children }: { children: ReactNode }) {
       // The `dark` custom variant in globals.css keys off a class, so the
       // existing semantic tokens keep working untouched.
       attribute="class"
-      defaultTheme="system"
+      defaultTheme="dark"
       enableSystem
       // Suppresses the cross-fade that would otherwise sweep every colour on
       // the page when the theme flips.

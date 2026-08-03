@@ -1,22 +1,16 @@
 "use client";
 
 import { WrenchIcon } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import {
   useCalculatorPersistence,
   useDoughCalculation,
 } from "../hooks/use-dough-calculation";
-import { CALCULATOR_PRESETS, findPreset } from "../presets/formulas";
+import { PAN_PROFILES, STEEL_PROFILES } from "../presets/equipment";
+import { findPreset } from "../presets/formulas";
 import { useCalculatorStore } from "../store/calculator-store";
 import { formatDoughLoading, formatPercentage } from "../utils/format";
 import { CustomIngredientEditor } from "./custom-ingredient-editor";
@@ -24,93 +18,113 @@ import { DoughStage } from "./dough-stage";
 import { FlourBlendEditor } from "./flour-blend-editor";
 import { FormulaControls } from "./formula-controls";
 import { IssueList } from "./issue-list";
-import { MobileSummaryBar } from "./mobile-summary-bar";
 import { RecipeSummary } from "./recipe-summary";
 import { SizeControls } from "./size-controls";
 
-/**
- * The calculator, in three deliberately unequal levels.
- *
- *  1. The dough stage — the live form and the headline weight.
- *  2. The workbench — controls, in an asymmetric grid beside the result.
- *  3. Formula details — blends, custom ingredients, preset assumptions.
- *
- * The three levels differ in surface, elevation and radius rather than being
- * the same card repeated, which is what stopped the previous version from
- * reading as a settings panel.
- */
-
-/** A control group on the workbench. Level two. */
 function Bench({
   title,
   eyebrow,
   children,
-  action,
   className,
 }: {
   title: string;
-  eyebrow?: string;
+  eyebrow: string;
   children: React.ReactNode;
-  action?: React.ReactNode;
   className?: string;
 }) {
   return (
-    <section className={cn("surface-workbench p-5", className)}>
-      <div className="mb-5 flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-0.5">
-          {eyebrow ? (
-            <span className="text-[0.65rem] font-semibold tracking-[0.14em] text-muted-foreground/75 uppercase">
-              {eyebrow}
-            </span>
-          ) : null}
-          <h2 className="text-base leading-tight font-semibold">{title}</h2>
-        </div>
-        {action}
+    <section
+      className={cn(
+        "border-b-[0.5px] border-graphite p-5 last:border-b-0 sm:p-6",
+        className
+      )}
+    >
+      <div className="mb-5 flex flex-col gap-1">
+        <span className="font-mono text-[10px] tracking-[0.12em] text-muted-foreground uppercase">
+          {eyebrow}
+        </span>
+        <h2 className="text-base font-medium text-foreground">{title}</h2>
       </div>
       {children}
     </section>
   );
 }
 
-/** A quieter grouping for level three. Deliberately not a workbench card. */
 function DetailBlock({
   title,
+  code,
   children,
 }: {
   title: string;
+  code: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="border-t border-hairline/40 pt-5">
-      <h2 className="mb-4 text-sm font-semibold tracking-wide text-foreground/85">
-        {title}
-      </h2>
+    <section className="border-t-[0.5px] border-graphite pt-5 first:border-t-0 first:pt-0">
+      <div className="mb-4 flex items-baseline justify-between gap-3">
+        <h2 className="text-sm font-medium text-foreground">{title}</h2>
+        <span className="font-mono text-[9px] tracking-[0.08em] text-muted-foreground">
+          {code}
+        </span>
+      </div>
       {children}
     </section>
+  );
+}
+
+function CommandValue({
+  label,
+  value,
+  className,
+}: {
+  label: string;
+  value: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex min-w-0 flex-col justify-center gap-0.5 border-l-[0.5px] border-graphite px-3 py-2.5 first:border-l-0",
+        className
+      )}
+    >
+      <span className="font-mono text-[9px] tracking-[0.08em] text-muted-foreground uppercase">
+        {label}
+      </span>
+      <span className="tabular truncate text-xs text-secondary-foreground">
+        {value}
+      </span>
+    </div>
   );
 }
 
 export function DoughCalculator() {
   useCalculatorPersistence();
 
+  const prefersReducedMotion = useReducedMotion();
   const presetId = useCalculatorStore((state) => state.presetId);
-  const applyPreset = useCalculatorStore((state) => state.applyPreset);
   const formatMode = useCalculatorStore((state) => state.formatMode);
   const setFormatMode = useCalculatorStore((state) => state.setFormatMode);
   const showAdvanced = useCalculatorStore((state) => state.showAdvanced);
   const setShowAdvanced = useCalculatorStore((state) => state.setShowAdvanced);
   const values = useCalculatorStore((state) => state.values);
+  const surfaceId = useCalculatorStore((state) => state.surfaceId);
+  const panProfileId = useCalculatorStore((state) => state.panProfileId);
 
   const { calculation, fieldErrors, surfaceWarning } = useDoughCalculation();
   const preset = findPreset(presetId);
-
   const result = calculation.ok ? calculation.result : null;
   const errors = calculation.ok ? [] : calculation.issues;
   const summaryWarnings = surfaceWarning ? [surfaceWarning] : [];
+  const isRound = values.shape === "round";
+  const equipmentName = isRound
+    ? (STEEL_PROFILES.find((surface) => surface.id === surfaceId)?.name ??
+      "Custom surface")
+    : (PAN_PROFILES.find((pan) => pan.id === panProfileId)?.name ??
+      "Custom pan");
 
   return (
-    <div className="mx-auto flex w-full max-w-[84rem] flex-col gap-5 px-4 pb-28 sm:px-6 lg:pb-16">
-      {/* LEVEL ONE */}
+    <div className="mx-auto flex w-full max-w-[84rem] flex-col gap-4 px-4 pb-16 sm:px-6">
       <DoughStage
         values={values}
         formatMode={formatMode}
@@ -119,145 +133,170 @@ export function DoughCalculator() {
         presetName={preset?.name ?? ""}
       />
 
-      {/* LEVEL TWO — asymmetric workbench. */}
-      <div className="grid gap-5 lg:grid-cols-12">
-        <div className="flex flex-col gap-5 lg:col-span-7">
-          <Bench
-            eyebrow="Starting point"
-            title="Recipe profile"
-            action={
-              <label className="flex shrink-0 cursor-pointer items-center gap-2">
-                <WrenchIcon
-                  aria-hidden="true"
-                  className="size-3.5 text-muted-foreground"
-                />
-                <span className="text-xs font-medium text-muted-foreground">
-                  Advanced
-                </span>
-                <Switch
-                  checked={showAdvanced}
-                  onCheckedChange={setShowAdvanced}
-                  aria-label="Advanced controls"
-                />
-              </label>
-            }
-          >
-            <div className="flex flex-col gap-3">
-              <Label htmlFor="preset" className="sr-only">
-                Starting point
-              </Label>
-              <Select
-                value={presetId}
-                onValueChange={(next) => {
-                  if (typeof next === "string") applyPreset(next);
-                }}
-                items={Object.fromEntries(
-                  CALCULATOR_PRESETS.map((p) => [p.id, p.name])
-                )}
-              >
-                <SelectTrigger id="preset" className="h-10 w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CALCULATOR_PRESETS.map((option) => (
-                    <SelectItem key={option.id} value={option.id}>
-                      {option.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      <section
+        aria-label="Current recipe command strip"
+        className="surface-workbench grid grid-cols-2 overflow-hidden sm:grid-cols-4 lg:grid-cols-8"
+      >
+        <CommandValue
+          label="Profile"
+          value={preset?.name ?? "Custom"}
+          className="col-span-2 border-l-0"
+        />
+        <CommandValue label="Shape" value={isRound ? "Round" : "Sheet pan"} />
+        <CommandValue label="Surface" value={equipmentName} />
+        <CommandValue
+          label="Hydration"
+          value={formatPercentage(values.hydrationPercent / 100)}
+        />
+        <CommandValue
+          label="Loading"
+          value={formatDoughLoading(
+            result?.sizing.effectiveDoughLoadingGramsPerSquareInch ??
+              values.doughLoadingGramsPerSquareInch
+          )}
+        />
+        <CommandValue label="Quantity" value={`× ${values.quantity}`} />
+        <label className="flex min-w-0 cursor-pointer items-center justify-between gap-2 border-l-[0.5px] border-graphite px-3 py-2.5">
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <span className="font-mono text-[9px] tracking-[0.08em] text-muted-foreground uppercase">
+              Advanced
+            </span>
+            <span className="text-xs text-secondary-foreground">
+              {showAdvanced ? "On" : "Off"}
+            </span>
+          </span>
+          <Switch
+            checked={showAdvanced}
+            onCheckedChange={setShowAdvanced}
+            aria-label="Advanced controls"
+          />
+        </label>
+      </section>
 
-              {preset ? (
-                <>
-                  <p className="text-xs leading-relaxed text-muted-foreground">
-                    {preset.description}{" "}
-                    <span className="text-foreground/70">
-                      Every value below is editable.
-                    </span>
-                  </p>
-                  {/* Key values of the current profile, as an at-a-glance
-                      readout rather than something to hunt for. */}
-                  <div className="surface-inset flex flex-wrap gap-x-6 gap-y-2 px-3 py-2.5">
-                    <ProfileStat
-                      label="Hydration"
-                      value={formatPercentage(values.hydrationPercent / 100)}
-                    />
-                    <ProfileStat
-                      label="Salt"
-                      value={formatPercentage(values.saltPercent / 100)}
-                    />
-                    <ProfileStat
-                      label="Loading"
-                      value={formatDoughLoading(
-                        values.doughLoadingGramsPerSquareInch
-                      )}
-                    />
-                  </div>
-                </>
-              ) : null}
-            </div>
-          </Bench>
-
-          <Bench eyebrow="Geometry" title="Size and equipment">
-            <SizeControls sizing={result?.sizing ?? null} />
-          </Bench>
-
-          <Bench eyebrow="Formula" title="Dough formula">
-            <FormulaControls />
-          </Bench>
-
-          {/* LEVEL THREE — quieter, grouped, not more cards. */}
-          {showAdvanced ? (
-            <div className="surface-workbench flex flex-col gap-5 p-5">
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[0.65rem] font-semibold tracking-[0.14em] text-ember uppercase">
-                  Baker&rsquo;s toolbox
-                </span>
-                <h2 className="text-base leading-tight font-semibold">
-                  Formula details
-                </h2>
+      <div className="grid gap-4 lg:grid-cols-12">
+        <div className="order-2 flex flex-col gap-4 lg:order-1 lg:col-span-7 xl:col-span-8">
+          <div className="surface-workbench overflow-hidden">
+            <Bench eyebrow="01 / Profile" title="Formula starting point">
+              <div className="flex flex-col gap-3">
+                <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                  {preset?.description}{" "}
+                  <span className="text-secondary-foreground">
+                    Every value below remains editable.
+                  </span>
+                </p>
+                <div className="grid grid-cols-3 gap-px overflow-hidden rounded-md border-[0.5px] border-graphite bg-graphite">
+                  <ProfileStat
+                    label="Hydration"
+                    value={formatPercentage(values.hydrationPercent / 100)}
+                  />
+                  <ProfileStat
+                    label="Salt"
+                    value={formatPercentage(values.saltPercent / 100)}
+                  />
+                  <ProfileStat
+                    label="Loading"
+                    value={formatDoughLoading(
+                      values.doughLoadingGramsPerSquareInch
+                    )}
+                  />
+                </div>
               </div>
+            </Bench>
 
-              <DetailBlock title="Main Dough Flour Blend">
-                <FlourBlendEditor result={result} />
-              </DetailBlock>
+            <Bench eyebrow="02 / Geometry" title="Size and equipment">
+              <SizeControls sizing={result?.sizing ?? null} />
+            </Bench>
 
-              <DetailBlock title="Custom ingredients">
-                <CustomIngredientEditor result={result} />
-              </DetailBlock>
-            </div>
-          ) : null}
+            <Bench eyebrow="03 / Formula" title="Dough composition">
+              <FormulaControls />
+            </Bench>
+          </div>
+
+          <AnimatePresence initial={false}>
+            {showAdvanced ? (
+              <motion.div
+                key="advanced-controls"
+                initial={
+                  prefersReducedMotion
+                    ? false
+                    : { opacity: 0.7, height: "auto", y: -4 }
+                }
+                animate={{ opacity: 1, height: "auto", y: 0 }}
+                exit={
+                  prefersReducedMotion
+                    ? { opacity: 0, height: 0 }
+                    : { opacity: 0, height: 0, y: -4 }
+                }
+                transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
+                className="surface-workbench overflow-hidden"
+              >
+                <div className="flex items-center justify-between border-b-[0.5px] border-graphite px-5 py-4 sm:px-6">
+                  <div className="flex items-center gap-2">
+                    <WrenchIcon
+                      aria-hidden="true"
+                      className="size-3.5 text-acid-lime"
+                    />
+                    <div className="flex flex-col">
+                      <span className="font-mono text-[9px] tracking-[0.1em] text-acid-lime uppercase">
+                        Precision layer
+                      </span>
+                      <h2 className="text-base font-medium">
+                        Advanced configuration
+                      </h2>
+                    </div>
+                  </div>
+                  <span className="hidden rounded-sm border-[0.5px] border-graphite px-2 py-1 font-mono text-[9px] text-muted-foreground sm:block">
+                    SIZING · FLOUR · LEAVENING · ENRICHMENT · PAN
+                  </span>
+                </div>
+
+                <div className="grid gap-6 p-5 sm:p-6 xl:grid-cols-2">
+                  <DetailBlock title="Main Dough Flour Blend" code="FLOUR.01">
+                    <FlourBlendEditor result={result} />
+                  </DetailBlock>
+                  <DetailBlock title="Custom ingredients" code="FORMULA.06">
+                    <CustomIngredientEditor result={result} />
+                  </DetailBlock>
+                </div>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
 
           {preset && preset.assumptions.length > 0 ? (
-            <section className="px-1">
-              <h2 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                What this starting point assumes
+            <section className="border-l-[0.5px] border-graphite px-4 py-2">
+              <h2 className="mb-2 font-mono text-[9px] tracking-[0.1em] text-muted-foreground uppercase">
+                Profile assumptions
               </h2>
-              <ul className="flex list-disc flex-col gap-1.5 pl-4 text-xs leading-relaxed text-muted-foreground">
+              <ul className="grid gap-1 text-xs leading-relaxed text-muted-foreground sm:grid-cols-2">
                 {preset.assumptions.map((assumption) => (
-                  <li key={assumption}>{assumption}</li>
+                  <li
+                    key={assumption}
+                    className="before:mr-2 before:text-smoke before:content-['—']"
+                  >
+                    {assumption}
+                  </li>
                 ))}
               </ul>
             </section>
           ) : null}
         </div>
 
-        {/* The result rides alongside the controls and stays in view. */}
-        <div className="lg:col-span-5">
-          <div className="flex flex-col gap-4 lg:sticky lg:top-20">
+        <aside className="order-1 lg:order-2 lg:col-span-5 xl:col-span-4">
+          <div className="flex flex-col gap-3 lg:sticky lg:top-[4.25rem]">
             {errors.length > 0 || fieldErrors.length > 0 ? (
-              <div className="surface-workbench p-5">
-                <h2 className="mb-3 text-base font-semibold">
+              <section className="surface-workbench p-5">
+                <h2 className="mb-3 text-base font-medium">
                   Check these values
                 </h2>
                 <IssueList issues={errors.length > 0 ? errors : fieldErrors} />
-              </div>
+              </section>
             ) : result ? (
               <>
                 <RecipeSummary
                   result={result}
                   shape={values.shape}
                   styleLabel={preset?.name ?? ""}
+                  surfaceLabel={equipmentName}
                 />
                 {summaryWarnings.length > 0 ? (
                   <IssueList issues={summaryWarnings} />
@@ -265,25 +304,19 @@ export function DoughCalculator() {
               </>
             ) : null}
           </div>
-        </div>
+        </aside>
       </div>
-
-      {result ? (
-        <MobileSummaryBar result={result} shape={values.shape} />
-      ) : null}
     </div>
   );
 }
 
 function ProfileStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-[0.6rem] font-medium tracking-[0.1em] text-muted-foreground/80 uppercase">
+    <div className="flex flex-col gap-0.5 bg-inset px-3 py-2.5">
+      <span className="font-mono text-[9px] tracking-[0.08em] text-muted-foreground uppercase">
         {label}
       </span>
-      <span className="tabular text-xs font-semibold text-foreground">
-        {value}
-      </span>
+      <span className="tabular text-xs text-foreground">{value}</span>
     </div>
   );
 }

@@ -82,12 +82,14 @@ export function RecipeSummary({
   result,
   shape,
   styleLabel,
+  surfaceLabel,
   className,
 }: {
   result: DoughFormulaResult;
   shape: "round" | "rectangular";
   /** The preset name, e.g. "New York on Baking Steel Plus". */
   styleLabel: string;
+  surfaceLabel: string;
   className?: string;
 }) {
   const [showLedger, setShowLedger] = useState(false);
@@ -113,10 +115,11 @@ export function RecipeSummary({
   return (
     <BorderGlow
       className={cn("w-full", className)}
-      borderRadius={20}
-      glowRadius={30}
-      coneSpread={22}
-      fillOpacity={0.35}
+      borderRadius={12}
+      glowRadius={14}
+      glowIntensity={0.28}
+      coneSpread={18}
+      fillOpacity={0.2}
       // Pointer-only: never animates on its own, and switched off entirely
       // under reduced motion or on touch.
       animated={false}
@@ -127,12 +130,12 @@ export function RecipeSummary({
         aria-labelledby="recipe-summary-heading"
         aria-live="polite"
         aria-atomic="false"
-        className="flex flex-col p-5"
+        className="flex flex-col p-5 sm:p-6"
       >
         <div className="flex items-center justify-between gap-3">
           <h2
             id="recipe-summary-heading"
-            className="text-[0.7rem] font-semibold tracking-[0.14em] text-muted-foreground uppercase"
+            className="font-mono text-[10px] font-normal tracking-[0.12em] text-muted-foreground uppercase"
           >
             Your recipe
           </h2>
@@ -142,26 +145,36 @@ export function RecipeSummary({
         </div>
 
         {/* LAYER ONE — the headline. */}
-        <div className="mt-3 flex flex-col gap-1">
+        <div className="sr-only lg:not-sr-only lg:mt-4 lg:flex lg:flex-col lg:gap-1">
           <AnimatedNumber
             value={result.totalDoughWeightGrams}
             format={formatTotalWeight}
-            className="text-[2.75rem] leading-none font-semibold tracking-tight text-foreground"
+            className="text-[2.85rem] leading-none font-normal tracking-[-0.022em] text-foreground sm:text-[3.35rem]"
           />
-          <p className="text-sm font-medium text-foreground/85">
+          <p className="text-sm font-medium text-secondary-foreground">
             {unitLabel} · {formatTotalWeight(sizing.doughWeightPerUnitGrams)}{" "}
             each
           </p>
+        </div>
+        <div className="mt-3 flex flex-col gap-1">
           <p className="text-xs text-muted-foreground">
             {formatPercentage(result.trueFinalHydration)} hydration ·{" "}
             {sizeLabel}
           </p>
-          <p className="mt-0.5 truncate text-xs text-ember">{styleLabel}</p>
+          <div className="mt-3 grid grid-cols-2 gap-px overflow-hidden rounded-md border-[0.5px] border-graphite bg-graphite">
+            <ResultMeta
+              label="Hydration"
+              value={formatPercentage(result.trueFinalHydration)}
+            />
+            <ResultMeta label="Geometry" value={sizeLabel} />
+            <ResultMeta label="Style" value={styleLabel} />
+            <ResultMeta label="Surface" value={surfaceLabel} />
+          </div>
         </div>
 
         {/* LAYER TWO — the shape of the formula. */}
         <div className="mt-5">
-          <h3 className="mb-2.5 text-[0.7rem] font-semibold tracking-[0.12em] text-muted-foreground/80 uppercase">
+          <h3 className="mb-2.5 font-mono text-[10px] font-normal tracking-[0.1em] text-muted-foreground uppercase">
             Composition
           </h3>
           <CompositionBar result={result} />
@@ -172,13 +185,13 @@ export function RecipeSummary({
         ) : null}
 
         {/* LAYER THREE — every exact value, one click away. */}
-        <div className="mt-4 border-t border-hairline/40 pt-3">
+        <div className="mt-4 border-t-[0.5px] border-graphite pt-3">
           <button
             type="button"
             onClick={() => setShowLedger((open) => !open)}
             aria-expanded={showLedger}
             aria-controls="recipe-ledger"
-            className="flex w-full items-center justify-between gap-2 rounded-md py-1 text-sm font-medium text-foreground/85 transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            className="flex w-full items-center justify-between gap-2 rounded-md py-1 text-sm font-medium text-secondary-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none"
           >
             <span>Full ingredient ledger</span>
             <ChevronDownIcon
@@ -285,5 +298,18 @@ export function RecipeSummary({
         </div>
       </section>
     </BorderGlow>
+  );
+}
+
+function ResultMeta({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="flex min-w-0 flex-col gap-0.5 bg-inset px-2.5 py-2">
+      <span className="font-mono text-[9px] tracking-[0.08em] text-muted-foreground uppercase">
+        {label}
+      </span>
+      <span className="tabular truncate text-[11px] text-secondary-foreground">
+        {value}
+      </span>
+    </span>
   );
 }

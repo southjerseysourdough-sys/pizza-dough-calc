@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
  *     can genuinely override padding and radius.
  *  4. Widened `spotlightColor` from an rgba template literal type to string,
  *     so a token-driven colour can be passed.
+ *  5. Added `disabled`, used by the format controls under reduced motion.
  *
  * The spotlight follows the pointer and never animates on its own, so it is
  * inert for keyboard users; under reduced motion the global transition
@@ -32,14 +33,16 @@ interface Position {
 
 interface SpotlightCardProps extends React.PropsWithChildren {
   className?: string;
-  /** Any CSS colour. Defaults to the warm crust tone from the palette. */
+  /** Any CSS colour. Defaults to the project signal accent. */
   spotlightColor?: string;
+  disabled?: boolean;
 }
 
 export default function SpotlightCard({
   children,
   className,
-  spotlightColor = "color-mix(in oklch, var(--crust) 22%, transparent)",
+  spotlightColor = "color-mix(in oklch, var(--acid-lime) 14%, transparent)",
+  disabled = false,
 }: SpotlightCardProps) {
   const divRef = useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = useState<boolean>(false);
@@ -47,13 +50,14 @@ export default function SpotlightCard({
   const [opacity, setOpacity] = useState<number>(0);
 
   const handleMouseMove: React.MouseEventHandler<HTMLDivElement> = (e) => {
-    if (!divRef.current || isFocused) return;
+    if (disabled || !divRef.current || isFocused) return;
 
     const rect = divRef.current.getBoundingClientRect();
     setPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
 
   const handleFocus = () => {
+    if (disabled) return;
     setIsFocused(true);
     setOpacity(0.6);
   };
@@ -64,6 +68,7 @@ export default function SpotlightCard({
   };
 
   const handleMouseEnter = () => {
+    if (disabled) return;
     setOpacity(0.6);
   };
 
@@ -80,14 +85,14 @@ export default function SpotlightCard({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className={cn(
-        "relative overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10",
+        "relative overflow-hidden rounded-xl border-[0.5px] border-graphite bg-card",
         className
       )}
     >
       <div
         className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 ease-in-out"
         style={{
-          opacity,
+          opacity: disabled ? 0 : opacity,
           background: `radial-gradient(circle at ${position.x}px ${position.y}px, ${spotlightColor}, transparent 80%)`,
         }}
       />

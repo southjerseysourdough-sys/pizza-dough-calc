@@ -28,7 +28,7 @@ const PRESENTATION: Record<
   error: {
     Icon: CircleAlertIcon,
     surface:
-      "bg-destructive/8 ring-1 ring-destructive/25 rounded-xl text-foreground",
+      "rounded-md border-[0.5px] border-destructive/30 bg-destructive/8 text-foreground",
     iconTone: "text-destructive",
     heading: "Check this value",
   },

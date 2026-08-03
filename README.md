@@ -1,9 +1,8 @@
 # Pizza Dough Calc
 
-A precision workspace for planning and scaling pizza dough.
-
-The calculator itself is not built yet — this repository currently holds the
-application foundation and a placeholder dashboard.
+A precision workspace for planning and scaling pizza dough by baking area,
+with round-steel and sheet-pan modes, baker&rsquo;s percentages, sourdough,
+commercial yeast, and hybrid formulas.
 
 ## Stack
 
@@ -14,7 +13,7 @@ application foundation and a placeholder dashboard.
 | Styling    | Tailwind CSS v4 (CSS-first config in `src/app/globals.css`) |
 | Components | shadcn/ui on Base UI (`base-nova` style)                    |
 | Effects    | React Bits, via the shadcn registry                         |
-| 3D         | React Three Fiber + drei                                    |
+| Visuals    | SVG Dough Field + Vengeance UI Perspective Grid             |
 | Animation  | Motion                                                      |
 | State      | Zustand                                                     |
 | Forms      | React Hook Form + Zod                                       |
@@ -51,7 +50,7 @@ src/
   app/          routes, layouts, metadata — thin, composes features
   components/
     ui/         shadcn/ui primitives
-    react-bits/ vendored React Bits sources (see its README)
+    effects/      vendored React Bits sources (see docs/component-inventory.md)
     layout/     app shell
     providers.tsx  single client boundary for app-wide providers
   features/     vertical slices — the default home for new code
@@ -62,10 +61,9 @@ src/
   utils/        pure helper functions
 ```
 
-Two conventions carry most of the weight, and both are documented where they
-apply: [`src/features/README.md`](src/features/README.md) for slice boundaries,
-and [`src/components/react-bits/README.md`](src/components/react-bits/README.md)
-for pulling in React Bits components.
+Feature boundaries are documented in
+[`src/features/README.md`](src/features/README.md), and copied registry source
+is tracked in [`docs/component-inventory.md`](docs/component-inventory.md).
 
 ## Adding components
 

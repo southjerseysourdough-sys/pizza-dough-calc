@@ -8,10 +8,8 @@
  * Local changes from upstream, also recorded in docs/component-inventory.md:
  *  1. Added the "use client" directive, which the registry source omits
  *     despite using hooks.
- *  2. Retuned every default from the shipped purple/pink/blue mesh
- *     (#c084fc / #f472b6 / #38bdf8) and near-black #120F17 fill to the
- *     project's ember, crust and workbench tokens, so the edge light reads as
- *     oven heat rather than neon.
+ *  2. Retuned the shipped purple/pink/blue mesh to acid lime, white and
+ *     graphite for the Linear system.
  *  3. Replaced the hardcoded `border-white/15` and six-layer black drop
  *     shadow with token-driven equivalents, so it works in light and dark.
  *  4. Added a `disabled` prop, used to switch the effect off entirely under
@@ -146,17 +144,17 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
   children,
   className = "",
   edgeSensitivity = 30,
-  glowColor = "var(--border-glow-hsl, 34 78 62)",
-  backgroundColor = "var(--workbench)",
-  borderRadius = 28,
-  glowRadius = 40,
-  glowIntensity = 1.0,
+  glowColor = "var(--border-glow-hsl, 65 88 54)",
+  backgroundColor = "var(--carbon)",
+  borderRadius = 12,
+  glowRadius = 16,
+  glowIntensity = 0.32,
   coneSpread = 25,
   animated = false,
   colors = [
-    "color-mix(in oklch, var(--ember) 60%, transparent)",
-    "color-mix(in oklch, var(--crust) 45%, transparent)",
-    "color-mix(in oklch, var(--steel) 30%, transparent)",
+    "color-mix(in oklch, var(--acid-lime) 70%, transparent)",
+    "color-mix(in oklch, var(--paper) 42%, transparent)",
+    "color-mix(in oklch, var(--graphite) 72%, transparent)",
   ],
   fillOpacity = 0.5,
   disabled = false,
@@ -293,10 +291,11 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
       className={`relative isolate grid border ${className}`}
       style={{
         background: backgroundColor,
-        borderColor: "color-mix(in oklch, var(--ember) 26%, var(--hairline))",
+        borderColor:
+          "color-mix(in oklch, var(--acid-lime) 20%, var(--graphite))",
         borderRadius: `${borderRadius}px`,
         transform: "translate3d(0, 0, 0.01px)",
-        boxShadow: "var(--shadow-result)",
+        boxShadow: "inset 0 0 0 0.5px var(--graphite)",
       }}
     >
       {/* mesh gradient border */}

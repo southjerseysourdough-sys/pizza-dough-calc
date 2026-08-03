@@ -16,27 +16,17 @@ export default function Home() {
     <>
       <SiteHeader />
 
-      {/*
-       * Page atmosphere: a warm key light from the upper right and a cool
-       * steel reflection from the lower left, both low contrast so nothing
-       * competes with the text. Fixed, so it does not scroll away.
-       */}
-      <div
-        aria-hidden="true"
-        className="page-atmosphere pointer-events-none fixed inset-0 -z-10"
-      />
-
-      <main className="flex-1 pt-5">
+      <main className="flex-1 pt-4">
         <DoughCalculator />
 
-        <div className="mx-auto w-full max-w-[84rem] px-4 pb-20 sm:px-6">
+        <div className="mx-auto w-full max-w-[84rem] px-4 pb-16 sm:px-6">
           <div className="max-w-3xl">
             <FormulaExplanation />
           </div>
         </div>
       </main>
 
-      <footer className="border-t border-hairline/40">
+      <footer className="border-t-[0.5px] border-graphite">
         <div className="mx-auto flex w-full max-w-[84rem] flex-col gap-1 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p className="text-xs text-muted-foreground">
             {siteConfig.name} · built by {siteConfig.brand}

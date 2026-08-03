@@ -32,7 +32,7 @@ export function ThemeToggle() {
   const current = mounted ? (theme ?? "system") : undefined;
 
   return (
-    <fieldset className="flex items-center gap-0.5 rounded-lg bg-muted/70 p-0.5">
+    <fieldset className="flex items-center gap-0.5 rounded-md border-[0.5px] border-graphite bg-carbon p-0.5">
       <legend className="sr-only">Colour theme</legend>
 
       {THEME_OPTIONS.map(({ value, label, Icon }) => {
@@ -42,11 +42,11 @@ export function ThemeToggle() {
           <label
             key={value}
             className={cn(
-              "relative flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors",
+              "relative flex size-7 cursor-pointer items-center justify-center rounded-sm text-muted-foreground transition-colors",
               "hover:text-foreground",
               // Focus ring is driven by the visually hidden input inside.
-              "focus-within:ring-3 focus-within:ring-ring/50 focus-within:outline-none",
-              isSelected && "bg-background text-foreground shadow-sm"
+              "focus-within:ring-2 focus-within:ring-ring/30 focus-within:outline-none",
+              isSelected && "bg-obsidian text-foreground"
             )}
           >
             <input

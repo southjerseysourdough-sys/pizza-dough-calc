@@ -1,52 +1,55 @@
 "use client";
 
-import { DoughVisualizer } from "@/components/three/dough-visualizer";
-import type { DoughVisualState } from "@/components/three/dough-visualizer";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { CALCULATOR_PRESETS } from "../presets/formulas";
 import type { CalculatorFormValues } from "../schemas/calculator-schema";
 import type { CalculatorFormatMode } from "../store/calculator-store";
+import { useCalculatorStore } from "../store/calculator-store";
 import type { DoughFormulaResult } from "../types/dough";
-import { formatTotalWeight } from "../utils/format";
+import {
+  formatArea,
+  formatDoughLoading,
+  formatPercentage,
+  formatTotalWeight,
+} from "../utils/format";
 import { AnimatedNumber } from "./animated-number";
+import { DoughField, type DoughFieldState } from "./dough-field";
 import { FormatCards } from "./format-cards";
 
-/**
- * Level one: the live dough stage.
- *
- * The strongest area of the page. It answers "what am I making, and how much
- * dough is that" before any control is touched, and pairs the live form with
- * the headline weight so the visualization and the number read as one object
- * rather than two unrelated panels.
- */
-
-/** Maps calculator source inputs onto the visualizer's form. */
+/** Maps calculator source values onto the illustrative Dough Field. */
 export function toVisualState(
   values: CalculatorFormValues,
   result: DoughFormulaResult | null
-): DoughVisualState {
-  const length = values.usableInteriorLengthInches;
-  const width = values.usableInteriorWidthInches;
-  const ratio = width > 0 && length > 0 ? length / width : 1.4;
-
+): DoughFieldState {
   return {
     shape: values.shape,
-    doughWeightPerUnitGrams: result?.sizing.doughWeightPerUnitGrams ?? 560,
-    hydration: values.hydrationPercent / 100,
     diameterInches: values.diameterInches,
-    panAspectRatio: ratio,
+    interiorLengthInches: values.usableInteriorLengthInches,
+    interiorWidthInches: values.usableInteriorWidthInches,
+    hydrationPercent: values.hydrationPercent,
+    doughLoadingGramsPerSquareInch:
+      result?.sizing.effectiveDoughLoadingGramsPerSquareInch ??
+      values.doughLoadingGramsPerSquareInch,
+    totalDoughWeightGrams: result?.totalDoughWeightGrams ?? 0,
     quantity: values.quantity,
   };
 }
 
-function StatChip({ label, value }: { label: string; value: string }) {
+function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-[0.65rem] font-medium tracking-[0.1em] text-muted-foreground/80 uppercase">
+    <div className="flex flex-col gap-1 border-t-[0.5px] border-graphite pt-3">
+      <span className="text-[10px] tracking-[0.1em] text-muted-foreground uppercase">
         {label}
       </span>
-      <span className="tabular text-sm font-semibold text-foreground">
-        {value}
-      </span>
+      <span className="tabular text-sm text-secondary-foreground">{value}</span>
     </div>
   );
 }
@@ -66,78 +69,134 @@ export function DoughStage({
   presetName: string;
   className?: string;
 }) {
-  const visualState = toVisualState(values, result);
+  const presetId = useCalculatorStore((state) => state.presetId);
+  const applyPreset = useCalculatorStore((state) => state.applyPreset);
+  const fieldState = toVisualState(values, result);
   const isRound = values.shape === "round";
 
   const sizeValue = isRound
-    ? `${values.diameterInches}″`
+    ? `${values.diameterInches}″ diameter`
     : `${values.usableInteriorLengthInches}″ × ${values.usableInteriorWidthInches}″`;
 
   return (
     <section
       aria-label="Dough Lab"
-      className={cn(
-        "surface-stage edge-highlight relative overflow-hidden",
-        className
-      )}
+      className={cn("surface-stage overflow-hidden", className)}
     >
-      <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:gap-8">
-        {/* Left: what you are making. */}
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <span className="text-[0.65rem] font-semibold tracking-[0.16em] text-ember uppercase">
-              Dough Lab
+      <div className="grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(14rem,0.8fr)_minmax(22rem,1.25fr)_minmax(12rem,0.7fr)]">
+        <div className="flex flex-col gap-5 border-b-[0.5px] border-graphite p-5 lg:border-r-[0.5px] lg:border-b-0 xl:p-6">
+          <div className="flex flex-col gap-2">
+            <span className="font-mono text-[10px] tracking-[0.14em] text-acid-lime uppercase">
+              Dough Lab / Online
             </span>
-            <h1 className="text-2xl leading-[1.15] font-semibold tracking-tight text-balance sm:text-3xl">
-              Pizza dough, sized by area
+            <h1 className="text-[1.75rem] leading-[1.08] font-normal tracking-[-0.022em] text-foreground sm:text-[2rem]">
+              Precision dough, measured by area.
             </h1>
-            <p className="max-w-md text-sm text-muted-foreground">
-              Set the pan or the pie and the formula follows, in baker&rsquo;s
+            <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
+              Choose the geometry. The formula resolves live in baker&rsquo;s
               percentages.
             </p>
           </div>
 
           <FormatCards value={formatMode} onChange={onFormatChange} />
+
+          <div className="mt-auto flex flex-col gap-2">
+            <Label
+              htmlFor="stage-preset"
+              className="text-[10px] tracking-[0.1em] text-muted-foreground uppercase"
+            >
+              Recipe profile
+            </Label>
+            <Select
+              value={presetId}
+              onValueChange={(next) => {
+                if (typeof next === "string") applyPreset(next);
+              }}
+              items={Object.fromEntries(
+                CALCULATOR_PRESETS.map((preset) => [preset.id, preset.name])
+              )}
+            >
+              <SelectTrigger id="stage-preset" className="h-9 w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CALCULATOR_PRESETS.map((preset) => (
+                  <SelectItem key={preset.id} value={preset.id}>
+                    {preset.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        {/* Right: the live form and its headline weight. */}
-        <div className="flex flex-col gap-4">
-          <DoughVisualizer
-            state={visualState}
-            className="h-44 w-full sm:h-52 lg:h-56"
-          />
-
-          <div className="flex items-end justify-between gap-4 border-t border-hairline/40 pt-4">
-            <div className="flex flex-col">
-              <span className="text-[0.65rem] font-medium tracking-[0.1em] text-muted-foreground/80 uppercase">
+        <div className="border-b-[0.5px] border-graphite p-3 sm:p-4 lg:border-r-[0.5px] lg:border-b-0">
+          <DoughField state={fieldState} className="lg:h-full" />
+          <div className="mt-3 flex items-end justify-between border-t-[0.5px] border-graphite pt-3 lg:hidden">
+            <span className="flex flex-col gap-0.5">
+              <span className="font-mono text-[9px] tracking-[0.1em] text-muted-foreground uppercase">
                 Total dough
               </span>
               {result ? (
                 <AnimatedNumber
                   value={result.totalDoughWeightGrams}
                   format={formatTotalWeight}
-                  className="text-3xl leading-none font-semibold tracking-tight sm:text-4xl"
+                  className="text-[2rem] leading-none font-normal tracking-[-0.022em] text-foreground"
                 />
               ) : (
-                <span className="text-3xl leading-none font-semibold tracking-tight text-muted-foreground">
-                  —
-                </span>
+                <span className="text-2xl text-muted-foreground">—</span>
               )}
-            </div>
+            </span>
+            <span className="tabular text-right text-xs text-muted-foreground">
+              {values.quantity} {isRound ? "pizza" : "pan"}
+              {values.quantity === 1 ? "" : "s"}
+            </span>
+          </div>
+        </div>
 
-            <div className="flex gap-5">
-              <StatChip
-                label={isRound ? "Size" : "Interior"}
-                value={sizeValue}
+        <div className="hidden flex-col justify-between gap-6 p-5 lg:flex xl:p-6">
+          <div className="flex flex-col gap-1">
+            <span className="font-mono text-[10px] tracking-[0.1em] text-muted-foreground uppercase">
+              Total dough
+            </span>
+            {result ? (
+              <AnimatedNumber
+                value={result.totalDoughWeightGrams}
+                format={formatTotalWeight}
+                className="text-[2.5rem] leading-none font-normal tracking-[-0.022em] text-foreground xl:text-[3rem]"
               />
-              <StatChip
-                label={isRound ? "Pizzas" : "Pans"}
-                value={String(values.quantity)}
-              />
-            </div>
+            ) : (
+              <span className="text-[2.5rem] text-muted-foreground">—</span>
+            )}
+            <span className="mt-1 text-xs text-muted-foreground">
+              {presetName}
+            </span>
           </div>
 
-          <p className="truncate text-xs text-muted-foreground">{presetName}</p>
+          <div className="grid gap-3">
+            <Stat label="Geometry" value={sizeValue} />
+            <Stat
+              label={isRound ? "Area / pizza" : "Area / pan"}
+              value={
+                result ? formatArea(result.sizing.areaPerUnitSquareInches) : "—"
+              }
+            />
+            <Stat
+              label="Hydration"
+              value={formatPercentage(values.hydrationPercent / 100)}
+            />
+            <Stat
+              label="Dough loading"
+              value={formatDoughLoading(
+                result?.sizing.effectiveDoughLoadingGramsPerSquareInch ??
+                  values.doughLoadingGramsPerSquareInch
+              )}
+            />
+            <Stat
+              label={isRound ? "Quantity / pizzas" : "Quantity / pans"}
+              value={String(values.quantity)}
+            />
+          </div>
         </div>
       </div>
     </section>

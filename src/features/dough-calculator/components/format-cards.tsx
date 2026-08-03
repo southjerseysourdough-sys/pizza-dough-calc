@@ -3,130 +3,69 @@
 import { CheckIcon } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 
+import SpotlightCard from "@/components/effects/SpotlightCard";
 import { cn } from "@/lib/utils";
 import type { CalculatorFormatMode } from "../store/calculator-store";
 
-/**
- * Format selection as two physical choices rather than a segmented bar.
- *
- * Each card carries its own geometry — a circle on a steel plate, a rectangle
- * in a rimmed pan — so the two modes are told apart by shape before colour.
- * Selection is conveyed four ways at once: the shape fills in, the border
- * thickens, a check appears, and the text weight changes, so it survives
- * greyscale and colour blindness.
- *
- * Implemented as a real radio group, so arrow keys move between options and
- * the current choice is announced without any custom key handling.
- */
-
-/** Round pizza on a steel plate, drawn rather than shipped as an icon file. */
 function RoundGlyph({ selected }: { selected: boolean }) {
   return (
-    <svg
-      viewBox="0 0 56 40"
-      aria-hidden="true"
-      className="h-10 w-14 shrink-0 overflow-visible"
-    >
-      {/* Steel plate, seen in perspective. */}
-      <ellipse
-        cx="28"
-        cy="26"
-        rx="24"
-        ry="9"
-        className={cn(
-          "transition-colors",
-          selected ? "fill-steel/25" : "fill-muted-foreground/12"
-        )}
-      />
-      <ellipse
-        cx="28"
-        cy="24"
-        rx="24"
-        ry="9"
-        className={cn(
-          "transition-colors",
-          selected ? "fill-steel/35" : "fill-muted-foreground/18"
-        )}
-      />
-      {/* The pizza itself. */}
+    <svg viewBox="0 0 36 36" aria-hidden="true" className="size-9 shrink-0">
       <circle
-        cx="28"
+        cx="18"
         cy="18"
-        r="12"
-        className={cn(
-          "transition-all",
-          selected
-            ? "fill-ember/35 stroke-ember"
-            : "fill-transparent stroke-muted-foreground/45"
-        )}
-        strokeWidth={selected ? 2 : 1.5}
+        r="11"
+        className={
+          selected ? "fill-none stroke-acid-lime" : "fill-none stroke-fog"
+        }
+        strokeWidth="1"
       />
-      {/* Diameter marker: the value this mode is driven by. */}
-      <line
-        x1="16"
-        y1="18"
-        x2="40"
-        y2="18"
-        strokeDasharray="2 2"
-        className={cn(
-          "transition-colors",
-          selected ? "stroke-ember" : "stroke-muted-foreground/40"
-        )}
+      <circle
+        cx="18"
+        cy="18"
+        r="2"
+        className={selected ? "fill-acid-lime" : "fill-fog"}
+      />
+      <path
+        d="M3 18h30M18 3v30"
+        className="fill-none stroke-graphite"
+        strokeWidth="0.75"
+        strokeDasharray="2 3"
+      />
+      <path
+        d="M7 31h22M7 28v6M29 28v6"
+        className={
+          selected ? "fill-none stroke-acid-lime" : "fill-none stroke-smoke"
+        }
         strokeWidth="1"
       />
     </svg>
   );
 }
 
-/** Rectangular dough in a rimmed sheet pan. */
 function RectangularGlyph({ selected }: { selected: boolean }) {
   return (
-    <svg
-      viewBox="0 0 56 40"
-      aria-hidden="true"
-      className="h-10 w-14 shrink-0 overflow-visible"
-    >
-      {/* Pan rim. */}
+    <svg viewBox="0 0 44 36" aria-hidden="true" className="h-9 w-11 shrink-0">
       <rect
-        x="5"
-        y="9"
-        width="46"
-        height="26"
-        rx="3"
-        className={cn(
-          "transition-colors",
-          selected
-            ? "fill-steel/25 stroke-steel/60"
-            : "fill-muted-foreground/10 stroke-muted-foreground/30"
-        )}
-        strokeWidth="1.5"
-      />
-      {/* Dough filling the interior. */}
-      <rect
-        x="9"
-        y="13"
-        width="38"
-        height="18"
+        x="7"
+        y="8"
+        width="30"
+        height="20"
         rx="2"
-        className={cn(
-          "transition-all",
-          selected
-            ? "fill-ember/35 stroke-ember"
-            : "fill-transparent stroke-muted-foreground/45"
-        )}
-        strokeWidth={selected ? 2 : 1.5}
+        className={
+          selected ? "fill-none stroke-acid-lime" : "fill-none stroke-fog"
+        }
+        strokeWidth="1"
       />
-      {/* Interior dimension markers. */}
-      <line
-        x1="9"
-        y1="35.5"
-        x2="47"
-        y2="35.5"
-        strokeDasharray="2 2"
-        className={cn(
-          "transition-colors",
-          selected ? "stroke-ember" : "stroke-muted-foreground/40"
-        )}
+      <path
+        d="M12 8v20M17 8v20M22 8v20M27 8v20M32 8v20M7 13h30M7 18h30M7 23h30"
+        className="fill-none stroke-graphite"
+        strokeWidth="0.5"
+      />
+      <path
+        d="M7 32h30M7 30v4M37 30v4"
+        className={
+          selected ? "fill-none stroke-acid-lime" : "fill-none stroke-smoke"
+        }
         strokeWidth="1"
       />
     </svg>
@@ -137,13 +76,13 @@ const FORMATS = [
   {
     value: "round" as const,
     title: "Round on steel",
-    detail: "Diameter · direct bake",
+    detail: "Diameter-led circular field",
     Glyph: RoundGlyph,
   },
   {
     value: "sheet-pan" as const,
     title: "Sicilian or sheet pan",
-    detail: "Interior size · pan loading",
+    detail: "Interior planar field",
     Glyph: RectangularGlyph,
   },
 ];
@@ -158,60 +97,64 @@ export function FormatCards({
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <fieldset className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+    <fieldset className="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-2 lg:grid-cols-1">
       <legend className="sr-only">Pizza format</legend>
 
       {FORMATS.map(({ value: format, title, detail, Glyph }) => {
         const selected = value === format;
 
         return (
-          <label
+          <SpotlightCard
             key={format}
+            disabled={Boolean(prefersReducedMotion)}
+            spotlightColor="color-mix(in oklch, var(--acid-lime) 14%, transparent)"
             className={cn(
-              "group relative flex cursor-pointer items-center gap-3 rounded-xl p-3 text-left transition-colors",
-              "focus-within:ring-3 focus-within:ring-ring/50 focus-within:outline-none",
+              "rounded-md border-[0.5px] bg-inset ring-0",
               selected
-                ? "border-2 border-ember/55 bg-accent/45 shadow-[var(--shadow-instrument)]"
-                : "border border-hairline/50 bg-inset/45 hover:border-hairline hover:bg-inset/70"
+                ? "border-acid-lime/70 bg-obsidian"
+                : "border-graphite hover:border-smoke"
             )}
           >
-            <input
-              type="radio"
-              name="pizza-format"
-              value={format}
-              checked={selected}
-              onChange={() => onChange(format)}
-              className="sr-only"
-            />
+            <label className="relative flex min-h-16 cursor-pointer flex-col items-start gap-1 px-3 py-2 text-left sm:flex-row sm:items-center sm:gap-3 sm:py-2.5">
+              <input
+                type="radio"
+                name="pizza-format"
+                value={format}
+                checked={selected}
+                onChange={() => onChange(format)}
+                className="peer sr-only"
+              />
 
-            <Glyph selected={selected} />
+              <span className="pointer-events-none absolute inset-0 rounded-md peer-focus-visible:ring-2 peer-focus-visible:ring-acid-lime peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background" />
+              <Glyph selected={selected} />
 
-            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="text-sm leading-tight font-medium break-words text-foreground">
+                  {title}
+                </span>
+                <span className="text-[11px] leading-tight text-muted-foreground max-[400px]:sr-only">
+                  {detail}
+                </span>
+              </span>
+
               <span
                 className={cn(
-                  "text-sm leading-tight",
+                  "absolute top-2.5 right-2.5 flex size-5 shrink-0 items-center justify-center rounded-sm border sm:static sm:ml-auto",
                   selected
-                    ? "font-semibold text-foreground"
-                    : "font-medium text-foreground/80"
+                    ? "border-acid-lime bg-acid-lime text-void"
+                    : "border-smoke text-transparent"
                 )}
               >
-                {title}
+                {selected ? (
+                  <motion.span
+                    layoutId={prefersReducedMotion ? undefined : "format-check"}
+                  >
+                    <CheckIcon aria-hidden="true" className="size-3" />
+                  </motion.span>
+                ) : null}
               </span>
-              <span className="text-xs leading-tight text-muted-foreground">
-                {detail}
-              </span>
-            </span>
-
-            {selected ? (
-              <motion.span
-                // Shared layout id slides the marker between the two cards.
-                layoutId={prefersReducedMotion ? undefined : "format-check"}
-                className="ml-auto flex size-5 shrink-0 items-center justify-center rounded-full bg-ember text-primary-foreground"
-              >
-                <CheckIcon aria-hidden="true" className="size-3" />
-              </motion.span>
-            ) : null}
-          </label>
+            </label>
+          </SpotlightCard>
         );
       })}
     </fieldset>

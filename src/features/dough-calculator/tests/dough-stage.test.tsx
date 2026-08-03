@@ -16,12 +16,9 @@ import { presetToFormValues } from "../presets/preset-form-values";
 import { toDoughFormulaInput } from "../schemas/calculator-schema";
 
 /**
- * The live dough stage and its visualization.
- *
- * jsdom has no WebGL and no layout engine, so nothing here inspects canvas
- * pixels. These tests cover what actually matters: the values handed to the
- * visualizer, the CSS fallback that stands in for it, and the guarantee that
- * a missing canvas never costs the baker any information.
+ * The live dough stage and its technical Dough Field.
+ * jsdom does not inspect visual pixels; these tests cover the data contract,
+ * accessible description, and the SVG path used on every device.
  */
 
 // The store is a module singleton, so without this a shape or quantity set by
@@ -43,9 +40,8 @@ describe("visualizer state for round mode", () => {
 
     expect(state.shape).toBe("round");
     expect(state.diameterInches).toBe(16);
-    // Percentages are decimals by the time they reach the form.
-    expect(state.hydration).toBeCloseTo(0.63, 10);
-    expect(state.doughWeightPerUnitGrams).toBeCloseTo(562.9734, 3);
+    expect(state.hydrationPercent).toBe(63);
+    expect(state.totalDoughWeightGrams).toBeCloseTo(562.9734, 3);
     expect(state.quantity).toBe(1);
   });
 
@@ -58,36 +54,35 @@ describe("visualizer state for round mode", () => {
 });
 
 describe("visualizer state for rectangular mode", () => {
-  it("receives the pan aspect ratio and dough weight", () => {
+  it("receives the pan dimensions and dough weight", () => {
     const values = presetToFormValues(SICILIAN_SHEET_PAN);
     const state = toVisualState(values, resultFor(SICILIAN_SHEET_PAN));
 
     expect(state.shape).toBe("rectangular");
-    // An 18 x 13 pan is a 1.38 ratio.
-    expect(state.panAspectRatio).toBeCloseTo(18 / 13, 10);
-    expect(state.hydration).toBeCloseTo(0.7, 10);
-    expect(state.doughWeightPerUnitGrams).toBeCloseTo(1053, 0);
+    expect(state.interiorLengthInches).toBe(18);
+    expect(state.interiorWidthInches).toBe(13);
+    expect(state.hydrationPercent).toBe(70);
+    expect(state.totalDoughWeightGrams).toBeCloseTo(1053, 0);
   });
 
-  it("falls back to a sane ratio when a dimension is empty", () => {
+  it("keeps the entered dimensions in the field contract", () => {
     const values = presetToFormValues(SICILIAN_SHEET_PAN);
     const state = toVisualState(
       { ...values, usableInteriorWidthInches: 0 },
       null
     );
 
-    // A zero width must not produce Infinity or NaN in the geometry.
-    expect(Number.isFinite(state.panAspectRatio)).toBe(true);
-    expect(state.panAspectRatio).toBeGreaterThan(0);
+    expect(state.interiorLengthInches).toBe(18);
+    expect(state.interiorWidthInches).toBe(0);
   });
 });
 
-describe("CSS fallback", () => {
+describe("SVG Dough Field", () => {
   it("renders without WebGL", () => {
-    // jsdom provides no WebGL context, so this is the real fallback path.
     const { container } = renderWithProviders(<DoughCalculator />);
 
-    expect(container.querySelector("[data-dough-fallback]")).not.toBeNull();
+    expect(container.querySelector("[data-dough-field]")).not.toBeNull();
+    expect(container.querySelector("[data-dough-field] svg")).not.toBeNull();
     expect(container.querySelector("canvas")).toBeNull();
   });
 
@@ -95,7 +90,7 @@ describe("CSS fallback", () => {
     const { container, user } = renderWithProviders(<DoughCalculator />);
 
     expect(
-      container.querySelector("[data-dough-fallback='round']")
+      container.querySelector("[data-dough-field='round']")
     ).not.toBeNull();
 
     await user.click(
@@ -103,15 +98,14 @@ describe("CSS fallback", () => {
     );
 
     expect(
-      container.querySelector("[data-dough-fallback='rectangular']")
+      container.querySelector("[data-dough-field='rectangular']")
     ).not.toBeNull();
   });
 
-  it("keeps every calculator value available when WebGL is missing", () => {
+  it("keeps every calculator value available beside the field", () => {
     const { container } = renderWithProviders(<DoughCalculator />);
 
     expect(container.querySelector("canvas")).toBeNull();
-    // The whole recipe is still there.
     expect(recipeRegion()).toHaveTextContent("563 g");
     expect(recipeRegion()).toHaveTextContent(/flour/i);
     expect(
@@ -119,13 +113,23 @@ describe("CSS fallback", () => {
     ).toBeInTheDocument();
   });
 
-  it("still renders the fallback under reduced motion", () => {
+  it("still renders the full SVG under reduced motion", () => {
     setMediaQuery("(prefers-reduced-motion: reduce)");
     const { container } = renderWithProviders(<DoughCalculator />);
 
-    // Reduced motion removes movement, never the visualization itself.
-    expect(container.querySelector("[data-dough-fallback]")).not.toBeNull();
+    expect(container.querySelector("[data-dough-field]")).not.toBeNull();
     expect(container.querySelector("canvas")).toBeNull();
+  });
+
+  it("exposes every responsive input on the field", () => {
+    const { container } = renderWithProviders(<DoughCalculator />);
+    const field = container.querySelector("[data-dough-field]");
+
+    expect(field).toHaveAttribute("data-diameter", "16");
+    expect(field).toHaveAttribute("data-hydration", "63");
+    expect(field).toHaveAttribute("data-loading", "2.8");
+    expect(field).toHaveAttribute("data-quantity", "1");
+    expect(field).toHaveAttribute("data-total");
   });
 });
 
@@ -134,7 +138,9 @@ describe("the headline result", () => {
     renderWithProviders(<DoughCalculator />);
 
     const stage = screen.getByRole("region", { name: /dough lab/i });
-    expect(within(stage).getByText(/total dough/i)).toBeInTheDocument();
+    // Responsive stage variants are mutually exclusive in CSS: the compact
+    // result is used below lg and the measurement column at lg and above.
+    expect(within(stage).getAllByText(/total dough/i)).toHaveLength(2);
     expect(stage).toHaveTextContent("563 g");
   });
 
@@ -155,6 +161,13 @@ describe("the headline result", () => {
     expect(recipeRegion()).toHaveTextContent("1 pizza");
     expect(recipeRegion()).toHaveTextContent("63% hydration");
     expect(recipeRegion()).toHaveTextContent(/new york on baking steel plus/i);
+  });
+
+  it("does not render a fixed duplicate mobile result bar", () => {
+    const { container } = renderWithProviders(<DoughCalculator />);
+
+    expect(container.querySelector("[data-mobile-summary-bar]")).toBeNull();
+    expect(container.querySelector(".fixed")).toBeNull();
   });
 });
 

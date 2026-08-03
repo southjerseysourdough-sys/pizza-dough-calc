@@ -2,26 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/*
- * Matches both the element carrying the class and everything beneath it.
- * next-themes puts `.dark` on <html>, so the bare `.dark *` form alone would
- * miss any utility applied directly to the root element.
- */
 @custom-variant dark (&:where(.dark, .dark *));
-
-/*
- * THE DOUGH LAB — palette and surface notes
- *
- * The palette runs on a warm axis (hue 55-90) drawn from carbon steel, oven
- * light, flour and baked crust. Everything is a semantic token: no component
- * may carry a raw hex or oklch value.
- *
- * The critical change from a flat "brown admin panel" is tonal LAYERING.
- * Rather than one card colour repeated everywhere, there are five stacked
- * elevations. In dark mode they climb from obsidian upward; in light mode the
- * page sits *darker* than its cards, so a card reads as a lit surface resting
- * on dusted stone rather than as white-on-white.
- */
 
 @theme inline {
   --color-background: var(--background);
@@ -29,358 +10,270 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
+
   --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 
-  /* Product tokens */
-  --color-warning: var(--warning);
-  --color-warning-foreground: var(--warning-foreground);
-  --color-warning-surface: var(--warning-surface);
-  --color-crust: var(--crust);
-  --color-surface-raised: var(--surface-raised);
-  --color-grid-line: var(--grid-line);
+  --color-void: var(--void);
+  --color-carbon: var(--carbon);
+  --color-obsidian: var(--obsidian);
+  --color-graphite: var(--graphite);
+  --color-smoke: var(--smoke);
+  --color-ash: var(--ash);
+  --color-fog: var(--fog);
+  --color-mist: var(--mist);
+  --color-bone: var(--bone);
+  --color-paper: var(--paper);
+  --color-acid-lime: var(--acid-lime);
+  --color-soft-foreground: var(--soft-foreground);
 
-  /* Dough Lab material tokens */
-  --color-ember: var(--ember);
-  --color-ember-soft: var(--ember-soft);
-  --color-steel: var(--steel);
-  --color-flour: var(--flour);
-  --color-olive: var(--olive);
   --color-stage: var(--stage);
   --color-workbench: var(--workbench);
   --color-instrument: var(--instrument);
   --color-inset: var(--inset);
   --color-hairline: var(--hairline);
+  --color-grid-line: var(--grid-line);
+  --color-surface-raised: var(--surface-raised);
 
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  /* Compatibility aliases for retained component source. */
+  --color-ember: var(--acid-lime);
+  --color-ember-soft: var(--acid-lime-soft);
+  --color-crust: var(--acid-lime);
+  --color-steel: var(--fog);
+  --color-flour: var(--bone);
+  --color-olive: var(--success);
+
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-surface: var(--warning-surface);
+  --color-success: var(--success);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 6px;
+  --radius-xl: 12px;
+  --radius-2xl: 12px;
+  --radius-3xl: 12px;
+  --radius-4xl: 12px;
 }
 
-/* Light: flour-dusted stone, warm paper and brushed aluminium. */
 :root {
-  /* The page is deliberately a shade darker than the cards it holds. */
-  --background: oklch(0.955 0.009 84);
-  --foreground: oklch(0.19 0.014 58);
+  --void: #f2f3f5;
+  --carbon: #ffffff;
+  --obsidian: #f7f8f9;
+  --graphite: #d9dce1;
+  --smoke: #b8bdc5;
+  --ash: #62666d;
+  --fog: #777d86;
+  --mist: #34383e;
+  --bone: #151719;
+  --paper: #08090a;
+  --acid-lime: #c9d914;
+  --acid-lime-soft: #e4f222;
+  --soft-foreground: #34383e;
 
-  --stage: oklch(0.978 0.008 86);
-  --workbench: oklch(0.988 0.005 88);
-  --instrument: oklch(1 0.002 90);
-  --inset: oklch(0.934 0.012 82);
-  --hairline: oklch(0.86 0.012 80);
+  --background: var(--void);
+  --foreground: #08090a;
+  --stage: var(--carbon);
+  --workbench: var(--carbon);
+  --instrument: var(--obsidian);
+  --inset: #f7f8f9;
+  --hairline: var(--graphite);
+  --grid-line: rgb(56 59 63 / 9%);
+  --surface-raised: var(--carbon);
 
-  --card: oklch(0.988 0.005 88);
-  --card-foreground: oklch(0.19 0.014 58);
-  --popover: oklch(0.994 0.004 88);
-  --popover-foreground: oklch(0.19 0.014 58);
+  --card: var(--carbon);
+  --card-foreground: var(--foreground);
+  --popover: var(--carbon);
+  --popover-foreground: var(--foreground);
+  --primary: var(--acid-lime);
+  --primary-foreground: #08090a;
+  --secondary: var(--obsidian);
+  --secondary-foreground: #34383e;
+  --muted: #e9ebee;
+  --muted-foreground: #62666d;
+  --accent: #eceef0;
+  --accent-foreground: #08090a;
+  --destructive: #c53939;
+  --border: var(--graphite);
+  --input: var(--graphite);
+  --ring: #aebd0f;
 
-  /* Oven amber is the single accent identity. */
-  --ember: oklch(0.56 0.16 55);
-  --ember-soft: oklch(0.72 0.11 62);
-  --steel: oklch(0.62 0.021 235);
-  --flour: oklch(0.94 0.014 85);
-  --olive: oklch(0.52 0.055 110);
+  --warning: #a56912;
+  --warning-foreground: #744808;
+  --warning-surface: #fff5df;
+  --success: #23833a;
 
-  --primary: oklch(0.5 0.145 52);
-  --primary-foreground: oklch(0.985 0.008 85);
-  --secondary: oklch(0.94 0.012 82);
-  --secondary-foreground: oklch(0.26 0.016 58);
-  --muted: oklch(0.945 0.011 84);
-  --muted-foreground: oklch(0.475 0.018 66);
-  --accent: oklch(0.925 0.024 72);
-  --accent-foreground: oklch(0.26 0.024 55);
-  --destructive: oklch(0.52 0.2 27);
-  --border: oklch(0.885 0.011 80);
-  --input: oklch(0.885 0.011 80);
-  --ring: oklch(0.56 0.16 55);
+  --chart-1: #c9d914;
+  --chart-2: #8a8f98;
+  --chart-3: #62666d;
+  --chart-4: #b5bac2;
+  --chart-5: #d0d6e0;
 
-  --chart-1: oklch(0.56 0.16 55);
-  --chart-2: oklch(0.66 0.11 72);
-  --chart-3: oklch(0.74 0.075 88);
-  --chart-4: oklch(0.6 0.045 130);
-  --chart-5: oklch(0.62 0.03 235);
-
-  --radius: 0.625rem;
-
-  --sidebar: oklch(0.97 0.008 85);
-  --sidebar-foreground: oklch(0.19 0.014 58);
-  --sidebar-primary: oklch(0.5 0.145 52);
-  --sidebar-primary-foreground: oklch(0.985 0.008 85);
-  --sidebar-accent: oklch(0.925 0.024 72);
-  --sidebar-accent-foreground: oklch(0.26 0.024 55);
-  --sidebar-border: oklch(0.885 0.011 80);
-  --sidebar-ring: oklch(0.56 0.16 55);
-
-  /* Advisory, not alarming: warm amber rather than red. */
-  --warning: oklch(0.5 0.105 68);
-  --warning-foreground: oklch(0.3 0.05 65);
-  --warning-surface: oklch(0.955 0.038 84);
-  --crust: oklch(0.5 0.145 52);
-  --surface-raised: oklch(0.988 0.005 88);
-  --grid-line: oklch(0.86 0.012 80 / 50%);
-
-  /* Elevation. Warm-tinted rather than neutral black. */
-  --shadow-instrument: 0 1px 2px oklch(0.3 0.03 60 / 6%);
-  --shadow-workbench:
-    0 1px 2px oklch(0.3 0.03 60 / 5%), 0 8px 24px -12px oklch(0.3 0.03 60 / 12%);
-  --shadow-result:
-    0 2px 4px oklch(0.3 0.03 60 / 6%),
-    0 20px 48px -20px oklch(0.35 0.06 55 / 22%);
+  --radius: 6px;
+  --border-glow-hsl: 65 88 46;
 }
 
-/* Dark: carbon steel under warm oven light. */
 .dark {
-  --background: oklch(0.135 0.009 58);
-  --foreground: oklch(0.945 0.008 86);
+  --void: #08090a;
+  --carbon: #0f1011;
+  --obsidian: #161718;
+  --graphite: #23252a;
+  --smoke: #383b3f;
+  --ash: #62666d;
+  --fog: #8a8f98;
+  --mist: #d0d6e0;
+  --bone: #e5e5e6;
+  --paper: #ffffff;
+  --acid-lime: #e4f222;
+  --acid-lime-soft: #e4f222;
+  --soft-foreground: #d0d6e0;
 
-  --stage: oklch(0.168 0.011 56);
-  --workbench: oklch(0.196 0.011 58);
-  --instrument: oklch(0.228 0.012 58);
-  --inset: oklch(0.152 0.01 58);
-  --hairline: oklch(0.34 0.014 60);
+  --background: var(--void);
+  --foreground: var(--paper);
+  --stage: var(--carbon);
+  --workbench: var(--carbon);
+  --instrument: var(--obsidian);
+  --inset: #0b0c0d;
+  --hairline: var(--graphite);
+  --grid-line: rgb(208 214 224 / 6%);
+  --surface-raised: var(--obsidian);
 
-  --card: oklch(0.196 0.011 58);
-  --card-foreground: oklch(0.945 0.008 86);
-  --popover: oklch(0.215 0.012 58);
-  --popover-foreground: oklch(0.945 0.008 86);
+  --card: var(--carbon);
+  --card-foreground: var(--paper);
+  --popover: var(--obsidian);
+  --popover-foreground: var(--paper);
+  --primary: var(--acid-lime);
+  --primary-foreground: var(--void);
+  --secondary: var(--obsidian);
+  --secondary-foreground: var(--mist);
+  --muted: var(--obsidian);
+  --muted-foreground: var(--fog);
+  --accent: var(--graphite);
+  --accent-foreground: var(--bone);
+  --destructive: #eb5757;
+  --border: var(--graphite);
+  --input: var(--smoke);
+  --ring: var(--acid-lime);
 
-  --ember: oklch(0.78 0.145 68);
-  --ember-soft: oklch(0.66 0.11 62);
-  --steel: oklch(0.68 0.028 235);
-  --flour: oklch(0.9 0.02 88);
-  --olive: oklch(0.66 0.06 112);
+  --warning: #d99f35;
+  --warning-foreground: #f2c86f;
+  --warning-surface: #211a0e;
+  --success: #27a644;
 
-  --primary: oklch(0.78 0.145 68);
-  --primary-foreground: oklch(0.17 0.022 58);
-  --secondary: oklch(0.27 0.013 58);
-  --secondary-foreground: oklch(0.945 0.008 86);
-  --muted: oklch(0.255 0.012 58);
-  --muted-foreground: oklch(0.735 0.018 78);
-  --accent: oklch(0.3 0.026 62);
-  --accent-foreground: oklch(0.945 0.008 86);
-  --destructive: oklch(0.68 0.17 25);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.72 0.12 65);
+  --chart-1: #e4f222;
+  --chart-2: #8a8f98;
+  --chart-3: #62666d;
+  --chart-4: #383b3f;
+  --chart-5: #d0d6e0;
 
-  --chart-1: oklch(0.78 0.145 68);
-  --chart-2: oklch(0.68 0.11 60);
-  --chart-3: oklch(0.58 0.08 52);
-  --chart-4: oklch(0.62 0.06 125);
-  --chart-5: oklch(0.68 0.035 235);
-
-  --sidebar: oklch(0.168 0.011 56);
-  --sidebar-foreground: oklch(0.945 0.008 86);
-  --sidebar-primary: oklch(0.78 0.145 68);
-  --sidebar-primary-foreground: oklch(0.17 0.022 58);
-  --sidebar-accent: oklch(0.3 0.026 62);
-  --sidebar-accent-foreground: oklch(0.945 0.008 86);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.72 0.12 65);
-
-  --warning: oklch(0.82 0.12 80);
-  --warning-foreground: oklch(0.9 0.08 82);
-  --warning-surface: oklch(0.27 0.04 68);
-  --crust: oklch(0.78 0.145 68);
-  --surface-raised: oklch(0.228 0.012 58);
-  --grid-line: oklch(1 0 0 / 6%);
-
-  --shadow-instrument: 0 1px 2px oklch(0 0 0 / 30%);
-  --shadow-workbench:
-    0 1px 2px oklch(0 0 0 / 28%), 0 10px 28px -14px oklch(0 0 0 / 55%);
-  --shadow-result:
-    0 2px 6px oklch(0 0 0 / 32%), 0 24px 56px -24px oklch(0.4 0.1 55 / 30%);
+  --border-glow-hsl: 65 88 54;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
+
   html {
     @apply font-sans;
+    font-feature-settings:
+      "cv01" 1,
+      "ss03" 1,
+      "zero" 1;
   }
 
-  /*
-   * Numeric readouts use tabular figures so digits stop shifting sideways as
-   * the recipe recalculates on every keystroke.
-   */
+  body {
+    @apply bg-background text-foreground;
+    letter-spacing: -0.01em;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  ::selection {
+    background: var(--acid-lime);
+    color: var(--void);
+  }
+
   .tabular {
     font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1;
+    font-feature-settings:
+      "tnum" 1,
+      "zero" 1;
   }
 }
 
 @layer components {
-  /*
-   * SURFACE ROLES
-   *
-   * Six distinct surfaces rather than one card style repeated. Each differs in
-   * more than colour: radius, border treatment and elevation all vary, so the
-   * hierarchy survives greyscale and does not depend on hue alone.
-   */
-
-  /* Level one. The live dough stage: darkest/deepest, largest radius. */
   .surface-stage {
-    background:
-      radial-gradient(
-        120% 100% at 78% 0%,
-        color-mix(in oklch, var(--ember) 12%, transparent) 0%,
-        transparent 58%
-      ),
-      linear-gradient(
-        168deg,
-        var(--stage) 0%,
-        color-mix(in oklch, var(--stage) 92%, var(--background)) 100%
-      );
-    border: 1px solid color-mix(in oklch, var(--hairline) 70%, transparent);
-    border-radius: 1.5rem;
-    box-shadow: var(--shadow-workbench);
+    background: var(--stage);
+    border: 0.5px solid var(--graphite);
+    border-radius: 12px;
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklch, var(--paper) 4%, transparent),
+      inset 0 0 0 0.5px color-mix(in oklch, var(--graphite) 55%, transparent);
   }
 
-  /* Level two. Control groups: mid elevation, medium radius. */
   .surface-workbench {
     background: var(--workbench);
-    border: 1px solid color-mix(in oklch, var(--hairline) 55%, transparent);
-    border-radius: 1rem;
-    box-shadow: var(--shadow-workbench);
+    border: 0.5px solid var(--graphite);
+    border-radius: 12px;
+    box-shadow: inset 0 1px 0 color-mix(in oklch, var(--paper) 3%, transparent);
   }
 
-  /* A single control cluster inside a workbench panel. */
   .surface-instrument {
     background: var(--instrument);
-    border: 1px solid color-mix(in oklch, var(--hairline) 40%, transparent);
-    border-radius: 0.75rem;
-    box-shadow: var(--shadow-instrument);
+    border: 0.5px solid var(--graphite);
+    border-radius: 6px;
   }
 
-  /* Level one result. The strongest surface on the page. */
   .surface-result {
-    background:
-      radial-gradient(
-        90% 70% at 50% -10%,
-        color-mix(in oklch, var(--ember) 14%, transparent) 0%,
-        transparent 65%
-      ),
-      var(--workbench);
-    border: 1px solid color-mix(in oklch, var(--ember) 26%, var(--hairline));
-    border-radius: 1.25rem;
-    box-shadow: var(--shadow-result);
+    background: var(--carbon);
+    border: 0.5px solid
+      color-mix(in oklch, var(--acid-lime) 20%, var(--graphite));
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 0.5px var(--graphite);
   }
 
-  /* Recessed data wells. Reads as cut into the surface above it. */
   .surface-inset {
     background: var(--inset);
-    border: 1px solid color-mix(in oklch, var(--hairline) 35%, transparent);
-    border-radius: 0.625rem;
-    box-shadow: inset 0 1px 2px oklch(0 0 0 / 6%);
+    border: 0.5px solid var(--graphite);
+    border-radius: 6px;
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 8%);
   }
 
   .surface-warning {
-    background: color-mix(in oklch, var(--warning-surface) 70%, transparent);
-    border: 1px solid color-mix(in oklch, var(--warning) 28%, transparent);
-    border-radius: 0.75rem;
-  }
-
-  /*
-   * A one-pixel light catch along the top edge, the way light lands on a
-   * bevelled steel panel. Applied sparingly to the stage and result only.
-   */
-  .edge-highlight {
-    position: relative;
-  }
-  .edge-highlight::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding-top: 1px;
-    background: linear-gradient(
-      to bottom,
-      color-mix(in oklch, var(--flour) 45%, transparent),
-      transparent 42%
-    );
-    -webkit-mask:
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-  }
-
-  /*
-   * Page atmosphere. A warm key light from the upper right and a cool steel
-   * reflection from the lower left, both very low contrast so text never
-   * competes with them.
-   */
-  .page-atmosphere {
-    background-image:
-      radial-gradient(
-        70% 45% at 82% -5%,
-        color-mix(in oklch, var(--ember) 13%, transparent) 0%,
-        transparent 62%
-      ),
-      radial-gradient(
-        60% 50% at 5% 105%,
-        color-mix(in oklch, var(--steel) 9%, transparent) 0%,
-        transparent 60%
-      );
-  }
-
-  /*
-   * Faint measurement grid, like a cutting mat on the bench. Sits under the
-   * workbench column at very low opacity.
-   */
-  .bench-grid {
-    background-image:
-      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
-      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
-    background-size: 28px 28px;
+    background: var(--warning-surface);
+    border: 0.5px solid color-mix(in oklch, var(--warning) 38%, var(--graphite));
+    border-radius: 6px;
   }
 }
 
-/*
- * Reduced motion.
- *
- * Decorative animation is switched off wholesale rather than shortened, so
- * nothing continuously animates for anyone who asked for stillness. Content
- * and functionality are untouched — elements that animate in simply start
- * visible. Components that run render loops check the same media query in JS
- * and skip mounting entirely.
- */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
