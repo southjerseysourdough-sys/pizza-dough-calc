@@ -7,6 +7,8 @@ import { useState } from "react";
 import BorderGlow from "@/components/effects/BorderGlow";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
+import { createFormulaSignatureData } from "../domain/formula-signature";
+import type { PizzaRecipeDocumentV1 } from "../domain/recipe-document";
 import type { DoughFormulaResult } from "../types/dough";
 import {
   formatArea,
@@ -17,6 +19,9 @@ import {
 import { AnimatedNumber } from "./animated-number";
 import { CompositionBar } from "./composition-bar";
 import { IssueList } from "./issue-list";
+import { FormulaSignature } from "./formula-signature";
+import { RecipeActions } from "./recipe-actions";
+import { ContextHelp } from "./context-help";
 
 /**
  * The signature result.
@@ -83,6 +88,7 @@ export function RecipeSummary({
   shape,
   styleLabel,
   surfaceLabel,
+  document,
   className,
 }: {
   result: DoughFormulaResult;
@@ -90,6 +96,7 @@ export function RecipeSummary({
   /** The preset name, e.g. "New York on Baking Steel Plus". */
   styleLabel: string;
   surfaceLabel: string;
+  document: PizzaRecipeDocumentV1 | null;
   className?: string;
 }) {
   const [showLedger, setShowLedger] = useState(false);
@@ -132,6 +139,26 @@ export function RecipeSummary({
         aria-atomic="false"
         className="flex flex-col p-5 sm:p-6"
       >
+        {document ? (
+          <div className="mb-5 flex flex-col gap-3 border-b-[0.5px] border-graphite pb-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-mono text-[9px] tracking-[0.1em] text-muted-foreground uppercase">
+                  Recipe identity
+                </p>
+                <p className="mt-1 truncate text-sm font-medium text-foreground">
+                  {document.name}
+                </p>
+              </div>
+              <FormulaSignature
+                data={createFormulaSignatureData(document.calculatorInput)}
+                animateSignal
+                className="size-16"
+              />
+            </div>
+            <RecipeActions document={document} />
+          </div>
+        ) : null}
         <div className="flex items-center justify-between gap-3">
           <h2
             id="recipe-summary-heading"
@@ -174,9 +201,21 @@ export function RecipeSummary({
 
         {/* LAYER TWO — the shape of the formula. */}
         <div className="mt-5">
-          <h3 className="mb-2.5 font-mono text-[10px] font-normal tracking-[0.1em] text-muted-foreground uppercase">
-            Composition
-          </h3>
+          <div className="mb-2.5 flex items-center gap-1">
+            <h3 className="font-mono text-[10px] font-normal tracking-[0.1em] text-muted-foreground uppercase">
+              Composition
+            </h3>
+            <ContextHelp
+              content={{
+                term: "Baker’s percentages",
+                definition:
+                  "Every ingredient is expressed relative to total formula flour, which is always 100%.",
+                effect:
+                  "The formula scales while ingredient relationships stay consistent.",
+                current: `${formatPercentage(result.trueFinalHydration)} true hydration`,
+              }}
+            />
+          </div>
           <CompositionBar result={result} />
         </div>
 

@@ -13,12 +13,15 @@ import { PAN_PROFILES, STEEL_PROFILES } from "../presets/equipment";
 import { findPreset } from "../presets/formulas";
 import { useCalculatorStore } from "../store/calculator-store";
 import { formatDoughLoading, formatPercentage } from "../utils/format";
+import { createRecipeDocument } from "../domain/recipe-document";
+import { useRecipeLibraryStore } from "../store/recipe-library-store";
 import { CustomIngredientEditor } from "./custom-ingredient-editor";
 import { DoughStage } from "./dough-stage";
 import { FlourBlendEditor } from "./flour-blend-editor";
 import { FormulaControls } from "./formula-controls";
 import { IssueList } from "./issue-list";
 import { RecipeSummary } from "./recipe-summary";
+import { RecipeStatus } from "./recipe-status";
 import { SizeControls } from "./size-controls";
 
 function Bench({
@@ -110,6 +113,10 @@ export function DoughCalculator() {
   const values = useCalculatorStore((state) => state.values);
   const surfaceId = useCalculatorStore((state) => state.surfaceId);
   const panProfileId = useCalculatorStore((state) => state.panProfileId);
+  const panInteriorMeasured = useCalculatorStore(
+    (state) => state.panInteriorMeasured
+  );
+  const workingName = useRecipeLibraryStore((state) => state.workingName);
 
   const { calculation, fieldErrors, surfaceWarning } = useDoughCalculation();
   const preset = findPreset(presetId);
@@ -122,6 +129,16 @@ export function DoughCalculator() {
       "Custom surface")
     : (PAN_PROFILES.find((pan) => pan.id === panProfileId)?.name ??
       "Custom pan");
+  const recipeDocument = createRecipeDocument({
+    name: workingName ?? preset?.name ?? "Untitled pizza recipe",
+    values,
+    context: {
+      presetId,
+      surfaceId,
+      panProfileId,
+      panInteriorMeasured,
+    },
+  });
 
   return (
     <div className="mx-auto flex w-full max-w-[84rem] flex-col gap-4 px-4 pb-16 sm:px-6">
@@ -132,6 +149,8 @@ export function DoughCalculator() {
         result={result}
         presetName={preset?.name ?? ""}
       />
+
+      <RecipeStatus />
 
       <section
         aria-label="Current recipe command strip"
@@ -297,6 +316,7 @@ export function DoughCalculator() {
                   shape={values.shape}
                   styleLabel={preset?.name ?? ""}
                   surfaceLabel={equipmentName}
+                  document={recipeDocument.ok ? recipeDocument.value : null}
                 />
                 {summaryWarnings.length > 0 ? (
                   <IssueList issues={summaryWarnings} />

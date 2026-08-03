@@ -7,6 +7,10 @@ import { PAN_PROFILES } from "../presets/equipment";
 import { DEFAULT_PRESET, findPreset } from "../presets/formulas";
 import { presetToFormValues } from "../presets/preset-form-values";
 import type { CalculatorFormValues } from "../schemas/calculator-schema";
+import {
+  recipeInputToFormValues,
+  type PizzaRecipeDocumentV1,
+} from "../domain/recipe-document";
 
 /**
  * Calculator state.
@@ -41,6 +45,7 @@ type CalculatorActions = {
   setPanProfile: (panProfileId: string) => void;
   setPanInteriorMeasured: (measured: boolean) => void;
   setShowAdvanced: (showAdvanced: boolean) => void;
+  applyRecipeDocument: (document: PizzaRecipeDocumentV1) => void;
   reset: () => void;
 };
 
@@ -126,13 +131,34 @@ export const useCalculatorStore = create<CalculatorState & CalculatorActions>()(
 
       setShowAdvanced: (showAdvanced) => set({ showAdvanced }),
 
+      applyRecipeDocument: (document) =>
+        set({
+          presetId: document.context.presetId,
+          formatMode:
+            document.calculatorInput.sizing.shape === "round"
+              ? "round"
+              : "sheet-pan",
+          values: recipeInputToFormValues(document.calculatorInput),
+          surfaceId: document.context.surfaceId,
+          panProfileId: document.context.panProfileId,
+          panInteriorMeasured: document.context.panInteriorMeasured,
+        }),
+
       reset: () => set(initialState()),
     }),
     {
       name: "pdc:calculator",
-      // Only a durable interface preference is persisted. Inputs and any
-      // validation state stay in memory so a reload starts from the preset.
-      partialize: (state) => ({ showAdvanced: state.showAdvanced }),
+      // Source input is a local draft. Calculated grams, warnings, validation
+      // and recipe-library state remain derived or separately versioned.
+      partialize: (state) => ({
+        presetId: state.presetId,
+        formatMode: state.formatMode,
+        values: state.values,
+        surfaceId: state.surfaceId,
+        panProfileId: state.panProfileId,
+        panInteriorMeasured: state.panInteriorMeasured,
+        showAdvanced: state.showAdvanced,
+      }),
       // Rehydration is deferred to an effect after mount. Reading
       // localStorage while the store is created would make the first client
       // render disagree with the server HTML.

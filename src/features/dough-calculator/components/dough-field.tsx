@@ -1,9 +1,16 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { animate, createScope, svg, type Scope } from "animejs";
+import { useReducedMotion } from "motion/react";
+import { useEffect, useMemo, useRef } from "react";
 
 import { PerspectiveGrid } from "@/components/ui/perspective-grid";
 import { cn } from "@/lib/utils";
+import {
+  createDoughFieldGeometry,
+  createDoughFieldTransitionPlan,
+  type DoughFieldGeometry,
+} from "../domain/dough-field-geometry";
 import { formatDoughLoading, formatTotalWeight } from "../utils/format";
 
 export type DoughFieldState = {
@@ -16,10 +23,6 @@ export type DoughFieldState = {
   totalDoughWeightGrams: number;
   quantity: number;
 };
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
 
 function MetaReadout({ label, value }: { label: string; value: string }) {
   return (
@@ -34,11 +37,7 @@ function MetaReadout({ label, value }: { label: string; value: string }) {
   );
 }
 
-/**
- * An illustrative measurement view derived from calculator inputs.
- * It deliberately avoids literal pizza or dough imagery and makes no claim
- * to simulate material science.
- */
+/** Technical, illustrative geometry. Anime.js owns SVG d/opacity only; Motion does not animate this SVG. */
 export function DoughField({
   state,
   className,
@@ -46,26 +45,112 @@ export function DoughField({
   state: DoughFieldState;
   className?: string;
 }) {
-  const prefersReducedMotion = useReducedMotion();
+  const rootRef = useRef<HTMLElement>(null);
+  const scopeRef = useRef<Scope | null>(null);
+  const previousGeometry = useRef<DoughFieldGeometry | null>(null);
+  const animations = useRef<Array<ReturnType<typeof animate>>>([]);
+  const prefersReducedMotion = useReducedMotion() ?? false;
+  const geometry = useMemo(() => createDoughFieldGeometry(state), [state]);
   const isRound = state.shape === "round";
-  const hydration = clamp(state.hydrationPercent, 40, 100);
-  const loading = clamp(state.doughLoadingGramsPerSquareInch, 1, 8);
-  const diameter = clamp(state.diameterInches, 6, 22);
-  const centerX = 240 + (hydration - 65) * 0.24;
-  const centerY = 157 + (loading - 3) * 1.6;
-  const roundRadius = 76 + ((diameter - 6) / 16) * 26;
-  const panRatio = clamp(
-    state.interiorWidthInches > 0
-      ? state.interiorLengthInches / state.interiorWidthInches
-      : 1.38,
-    0.75,
-    2.25
-  );
-  const panWidth = 168 * Math.sqrt(panRatio);
-  const panHeight = 168 / Math.sqrt(panRatio);
-  const transition = prefersReducedMotion
-    ? { duration: 0 }
-    : { duration: 0.42, ease: [0.22, 1, 0.36, 1] as const };
+
+  useEffect(() => {
+    if (!rootRef.current) return;
+    scopeRef.current = createScope({ root: rootRef });
+    return () => {
+      animations.current.forEach((animation) => animation.cancel());
+      animations.current = [];
+      scopeRef.current?.revert();
+      scopeRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    const scope = scopeRef.current;
+    if (!root || !scope) return;
+    const active = root.querySelector<SVGPathElement>("[data-field-active]");
+    const target = root.querySelector<SVGPathElement>("[data-field-target]");
+    const contours = root.querySelectorAll<SVGPathElement>(
+      "[data-field-contour]"
+    );
+    const labels = root.querySelectorAll<SVGElement>("[data-field-label]");
+    const dimensions = root.querySelectorAll<SVGElement>(
+      "[data-field-dimension]"
+    );
+    if (!active || !target) return;
+
+    animations.current.forEach((animation) => animation.cancel());
+    animations.current = [];
+    const previous = previousGeometry.current;
+    const modeChanged = previous !== null && previous.shape !== geometry.shape;
+    const plan = createDoughFieldTransitionPlan(
+      prefersReducedMotion,
+      modeChanged
+    );
+    target.setAttribute("d", geometry.activePath);
+
+    const supportsPathMeasurement = typeof active.getTotalLength === "function";
+
+    if (prefersReducedMotion || previous === null || !supportsPathMeasurement) {
+      active.setAttribute("d", geometry.activePath);
+      contours.forEach((contour, index) =>
+        contour.setAttribute(
+          "d",
+          geometry.contourPaths[index] ?? geometry.activePath
+        )
+      );
+      labels.forEach((label) => label.setAttribute("opacity", "1"));
+      dimensions.forEach((line) => line.setAttribute("opacity", "1"));
+      previousGeometry.current = geometry;
+      return;
+    }
+
+    active.setAttribute("d", previous.activePath);
+    scope.execute(() => {
+      if (modeChanged)
+        animations.current.push(
+          animate(contours, {
+            opacity: [1, 0.08],
+            duration: plan.retractMs,
+            ease: "out(2)",
+          })
+        );
+      animations.current.push(
+        animate(active, {
+          d: svg.morphTo(target, 0.45),
+          strokeWidth: [2.2, 1.5],
+          duration: plan.morphMs,
+          ease: "inOut(3)",
+        })
+      );
+      animations.current.push(
+        animate(dimensions, {
+          opacity: [0.15, 1],
+          duration: plan.settleMs,
+          delay: plan.labelDelayMs,
+          ease: "out(3)",
+        })
+      );
+      animations.current.push(
+        animate(labels, {
+          opacity: [0, 1],
+          translateY: [3, 0],
+          duration: plan.settleMs,
+          delay: plan.labelDelayMs,
+          ease: "out(3)",
+        })
+      );
+      animations.current.push(
+        animate(contours, {
+          opacity: [modeChanged ? 0.08 : 0.45, 0.82],
+          duration: plan.settleMs,
+          delay: modeChanged ? plan.morphMs - 80 : 20,
+          ease: "out(2)",
+        })
+      );
+    });
+    previousGeometry.current = geometry;
+  }, [geometry, prefersReducedMotion]);
 
   const sizeLabel = isRound
     ? `${state.diameterInches} inch diameter`
@@ -73,6 +158,7 @@ export function DoughField({
 
   return (
     <figure
+      ref={rootRef}
       aria-labelledby="dough-field-caption"
       data-dough-field={isRound ? "round" : "rectangular"}
       data-diameter={state.diameterInches}
@@ -88,7 +174,6 @@ export function DoughField({
       )}
     >
       <PerspectiveGrid className="absolute inset-0 -z-10 opacity-60" />
-
       <div className="flex items-center justify-between border-b-[0.5px] border-graphite px-3 py-2">
         <span className="flex items-center gap-2 font-mono text-[10px] tracking-[0.1em] text-secondary-foreground uppercase">
           <span className="size-1.5 rounded-full bg-acid-lime" />
@@ -98,7 +183,6 @@ export function DoughField({
           ILLUSTRATIVE
         </span>
       </div>
-
       <div className="relative min-h-40 flex-1 sm:min-h-56">
         <svg
           aria-hidden="true"
@@ -120,7 +204,6 @@ export function DoughField({
               />
             </pattern>
           </defs>
-
           <rect
             x="24"
             y="18"
@@ -135,200 +218,77 @@ export function DoughField({
             className="fill-none stroke-smoke"
             strokeWidth="1"
           />
-
-          <motion.g
-            animate={{ scale: 1 + (hydration - 65) / 1800 }}
-            transition={transition}
-            style={{
-              display: isRound ? "block" : "none",
-              transformOrigin: "240px 158px",
-            }}
+          <path data-field-target d={geometry.activePath} className="hidden" />
+          {geometry.contourPaths.slice(1).map((path, index) => (
+            <path
+              key={index}
+              data-field-contour
+              d={path}
+              className="fill-none stroke-smoke/85"
+              strokeWidth="0.8"
+              strokeDasharray={`${6 + index * 2} ${6 + index}`}
+            />
+          ))}
+          {geometry.guideLines.map((line, index) => (
+            <line
+              key={index}
+              x1={line.x1}
+              y1={line.y1}
+              x2={line.x2}
+              y2={line.y2}
+              className={
+                line.active ? "stroke-acid-lime" : "stroke-graphite/70"
+              }
+              strokeWidth={line.active ? 1.1 : 0.5}
+            />
+          ))}
+          <path
+            data-field-active
+            d={geometry.activePath}
+            className="fill-none stroke-acid-lime"
+            strokeWidth="1.5"
+          />
+          <circle
+            cx={geometry.center.x}
+            cy={geometry.center.y}
+            r="3"
+            className="fill-acid-lime"
+          />
+          {geometry.dimensionLines.map((line, index) => (
+            <line
+              key={index}
+              data-field-dimension
+              x1={line.x1}
+              y1={line.y1}
+              x2={line.x2}
+              y2={line.y2}
+              className={line.active ? "stroke-acid-lime" : "stroke-smoke"}
+              strokeWidth="1"
+            />
+          ))}
+          <text
+            data-field-label
+            x="240"
+            y="286"
+            textAnchor="middle"
+            className="fill-soft-foreground font-mono text-[10px]"
           >
-            {[1, 0.78, 0.56, 0.34].map((factor, index) => (
-              <circle
-                key={factor}
-                cx={centerX + index * 1.4}
-                cy={centerY - index * 0.8}
-                r={roundRadius * factor}
-                className={
-                  index === 0
-                    ? "fill-none stroke-acid-lime"
-                    : "fill-none stroke-smoke/85"
-                }
-                strokeWidth={index === 0 ? 1.5 : 0.8}
-                strokeDasharray={
-                  index === 0 ? "none" : `${4 + index * 2} ${5 + index}`
-                }
-              />
-            ))}
-            {Array.from({ length: 16 }, (_, index) => {
-              const angle = (index * Math.PI * 2) / 16;
-              const inner = roundRadius + 8;
-              const outer = roundRadius + (index % 4 === 0 ? 18 : 13);
-              return (
-                <line
-                  key={index}
-                  x1={centerX + Math.cos(angle) * inner}
-                  y1={centerY + Math.sin(angle) * inner}
-                  x2={centerX + Math.cos(angle) * outer}
-                  y2={centerY + Math.sin(angle) * outer}
-                  className={
-                    index % 4 === 0 ? "stroke-acid-lime" : "stroke-smoke"
-                  }
-                  strokeWidth={index % 4 === 0 ? 1.2 : 0.7}
-                />
-              );
-            })}
-            {Array.from({ length: 8 }, (_, index) => {
-              const angle = (index * Math.PI) / 8;
-              return (
-                <line
-                  key={index}
-                  x1={centerX - Math.cos(angle) * roundRadius}
-                  y1={centerY - Math.sin(angle) * roundRadius}
-                  x2={centerX + Math.cos(angle) * roundRadius}
-                  y2={centerY + Math.sin(angle) * roundRadius}
-                  className="stroke-graphite/70"
-                  strokeWidth="0.5"
-                  strokeDasharray="2 5"
-                />
-              );
-            })}
-            <circle
-              cx={centerX}
-              cy={centerY}
-              r="3"
-              className="fill-acid-lime"
-            />
-            <line
-              x1={centerX - roundRadius}
-              y1={centerY + roundRadius + 28}
-              x2={centerX + roundRadius}
-              y2={centerY + roundRadius + 28}
-              className="stroke-acid-lime"
-              strokeWidth="1"
-            />
-            <line
-              x1={centerX - roundRadius}
-              y1={centerY + roundRadius + 22}
-              x2={centerX - roundRadius}
-              y2={centerY + roundRadius + 34}
-              className="stroke-acid-lime"
-              strokeWidth="1"
-            />
-            <line
-              x1={centerX + roundRadius}
-              y1={centerY + roundRadius + 22}
-              x2={centerX + roundRadius}
-              y2={centerY + roundRadius + 34}
-              className="stroke-acid-lime"
-              strokeWidth="1"
-            />
+            {geometry.primaryLabel}
+          </text>
+          {geometry.secondaryLabel ? (
             <text
-              x={centerX}
-              y={centerY + roundRadius + 49}
-              textAnchor="middle"
-              className="fill-soft-foreground font-mono text-[10px]"
-            >
-              Ø {state.diameterInches} IN
-            </text>
-          </motion.g>
-
-          <motion.g
-            animate={{ scale: 1 + (loading - 3) / 220 }}
-            transition={transition}
-            style={{
-              display: isRound ? "none" : "block",
-              transformOrigin: "240px 158px",
-            }}
-          >
-            {Array.from({ length: 4 }, (_, index) => {
-              const inset = index * (7 + (hydration - 50) * 0.025);
-              return (
-                <rect
-                  key={index}
-                  x={240 - panWidth / 2 + inset}
-                  y={158 - panHeight / 2 + inset}
-                  width={Math.max(panWidth - inset * 2, 8)}
-                  height={Math.max(panHeight - inset * 2, 8)}
-                  rx="2"
-                  className={
-                    index === 0
-                      ? "fill-none stroke-acid-lime"
-                      : "fill-none stroke-smoke/85"
-                  }
-                  strokeWidth={index === 0 ? 1.5 : 0.8}
-                  strokeDasharray={
-                    index === 0 ? "none" : `${5 + index} ${4 + index}`
-                  }
-                />
-              );
-            })}
-            {Array.from({ length: 9 }, (_, index) => {
-              const x = 240 - panWidth / 2 + (panWidth / 8) * index;
-              return (
-                <line
-                  key={index}
-                  x1={x}
-                  y1={158 - panHeight / 2}
-                  x2={x}
-                  y2={158 + panHeight / 2}
-                  className="stroke-graphite/70"
-                  strokeWidth="0.5"
-                />
-              );
-            })}
-            {Array.from({ length: 7 }, (_, index) => {
-              const y = 158 - panHeight / 2 + (panHeight / 6) * index;
-              return (
-                <line
-                  key={index}
-                  x1={240 - panWidth / 2}
-                  y1={y}
-                  x2={240 + panWidth / 2}
-                  y2={y}
-                  className="stroke-graphite/70"
-                  strokeWidth="0.5"
-                />
-              );
-            })}
-            <line
-              x1={240 - panWidth / 2}
-              y1={158 + panHeight / 2 + 26}
-              x2={240 + panWidth / 2}
-              y2={158 + panHeight / 2 + 26}
-              className="stroke-acid-lime"
-              strokeWidth="1"
-            />
-            <text
-              x="240"
-              y={158 + panHeight / 2 + 43}
-              textAnchor="middle"
-              className="fill-soft-foreground font-mono text-[10px]"
-            >
-              {state.interiorLengthInches} IN
-            </text>
-            <line
-              x1={240 + panWidth / 2 + 24}
-              y1={158 - panHeight / 2}
-              x2={240 + panWidth / 2 + 24}
-              y2={158 + panHeight / 2}
-              className="stroke-smoke"
-              strokeWidth="1"
-            />
-            <text
-              x={240 + panWidth / 2 + 39}
+              data-field-label
+              x="435"
               y="158"
               textAnchor="middle"
-              transform={`rotate(90 ${240 + panWidth / 2 + 39} 158)`}
+              transform="rotate(90 435 158)"
               className="fill-muted-foreground font-mono text-[10px]"
             >
-              {state.interiorWidthInches} IN
+              {geometry.secondaryLabel}
             </text>
-          </motion.g>
+          ) : null}
         </svg>
       </div>
-
       <div className="grid grid-cols-4 gap-3 border-t-[0.5px] border-graphite px-3 py-2.5">
         <MetaReadout label="Hydration" value={`${state.hydrationPercent}%`} />
         <MetaReadout
@@ -341,13 +301,12 @@ export function DoughField({
         />
         <MetaReadout label="Count" value={`× ${state.quantity}`} />
       </div>
-
       <figcaption id="dough-field-caption" className="sr-only">
         Dough Field technical visualization: {sizeLabel},{" "}
         {state.hydrationPercent}% hydration,{" "}
         {formatDoughLoading(state.doughLoadingGramsPerSquareInch)},{" "}
         {formatTotalWeight(state.totalDoughWeightGrams)} total for{" "}
-        {state.quantity}.
+        {state.quantity}. Illustrative, not a scientific simulation.
       </figcaption>
     </figure>
   );

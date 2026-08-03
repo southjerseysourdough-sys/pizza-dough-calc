@@ -61,6 +61,13 @@ export function FormulaControls() {
         max={100}
         step={0.5}
         hint="Water as a percentage of total flour."
+        help={{
+          term: "Hydration",
+          definition: "The total formula water divided by total formula flour.",
+          effect:
+            "Higher values generally make dough softer and more extensible.",
+          current: `${values.hydrationPercent}% hydration`,
+        }}
         onChange={(hydrationPercent) => setValues({ hydrationPercent })}
       />
 
@@ -181,6 +188,13 @@ export function FormulaControls() {
             max={60}
             step={1}
             hint="Starter weight as a percentage of total flour."
+            help={{
+              term: "Starter percentage",
+              definition: "The ripe starter used relative to total flour.",
+              effect:
+                "It changes the amount of prefermented flour and the main-dough flour and water weigh-out.",
+              current: `${values.starterPercent}% starter`,
+            }}
             onChange={(starterPercent) => setValues({ starterPercent })}
           />
           {showAdvanced ? (
@@ -192,6 +206,14 @@ export function FormulaControls() {
               max={200}
               step={5}
               hint="Water divided by flour inside your starter."
+              help={{
+                term: "Starter hydration",
+                definition:
+                  "The water-to-flour ratio inside the starter itself.",
+                effect:
+                  "It reallocates flour and water between starter and main dough without changing true formula hydration.",
+                current: `${values.starterHydrationPercent}% starter hydration`,
+              }}
               onChange={(starterHydrationPercent) =>
                 setValues({ starterHydrationPercent })
               }

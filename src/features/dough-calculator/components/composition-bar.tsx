@@ -78,7 +78,10 @@ export function CompositionBar({ result }: { result: DoughFormulaResult }) {
         ))}
       </div>
 
-      <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+      <ul
+        aria-label="Ingredient composition"
+        className="grid grid-cols-2 gap-x-4 gap-y-1.5"
+      >
         {segments.map((segment) => (
           <li
             key={segment.id}

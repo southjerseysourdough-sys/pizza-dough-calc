@@ -284,3 +284,144 @@
     scroll-behavior: auto !important;
   }
 }
+
+.recipe-print-sheet {
+  position: fixed;
+  left: -200vw;
+  top: 0;
+  width: 7.5in;
+  min-height: 10in;
+  padding: 0.35in;
+  background: white;
+  color: #101112;
+  font-family: Arial, sans-serif;
+  font-size: 10pt;
+}
+
+.print-sheet-header,
+.print-result-grid,
+.print-row {
+  display: flex;
+}
+
+.print-sheet-header {
+  align-items: flex-start;
+  justify-content: space-between;
+  border-bottom: 1px solid #383b3f;
+  padding-bottom: 14pt;
+}
+
+.print-sheet-header h1 {
+  margin: 5pt 0 3pt;
+  font-size: 24pt;
+  font-weight: 400;
+}
+
+.print-sheet-header p,
+.print-sheet-header h1 {
+  color: #101112;
+}
+
+.print-kicker,
+.print-stat > span,
+.print-group h2,
+.print-notes h2 {
+  font-family: ui-monospace, monospace;
+  font-size: 7pt;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #62666d;
+}
+
+.print-result-grid {
+  flex-wrap: wrap;
+  margin: 14pt 0;
+  border-top: 1px solid #d0d3d8;
+  border-left: 1px solid #d0d3d8;
+}
+
+.print-stat {
+  box-sizing: border-box;
+  width: 33.333%;
+  min-height: 48pt;
+  padding: 8pt;
+  border-right: 1px solid #d0d3d8;
+  border-bottom: 1px solid #d0d3d8;
+}
+
+.print-stat > span,
+.print-stat > strong {
+  display: block;
+}
+
+.print-stat > strong {
+  margin-top: 4pt;
+  font-size: 10pt;
+  font-weight: 500;
+}
+
+.print-stat-strong > strong {
+  font-size: 16pt;
+}
+
+.print-group,
+.print-notes {
+  margin-top: 14pt;
+  break-inside: avoid;
+}
+
+.print-group h2,
+.print-notes h2 {
+  margin-bottom: 3pt;
+  border-bottom: 1px solid #383b3f;
+  padding-bottom: 4pt;
+}
+
+.print-row {
+  justify-content: space-between;
+  gap: 20pt;
+  border-bottom: 1px solid #e2e4e7;
+  padding: 4pt 0;
+}
+
+.print-row small {
+  display: block;
+  color: #62666d;
+}
+
+.print-row strong {
+  font-family: ui-monospace, monospace;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.print-notes div {
+  height: 24pt;
+  border-bottom: 1px solid #d0d3d8;
+}
+
+.recipe-print-sheet footer {
+  margin-top: 18pt;
+  color: #62666d;
+  font-family: ui-monospace, monospace;
+  font-size: 7pt;
+}
+
+@media print {
+  @page {
+    size: letter;
+    margin: 0.45in;
+  }
+
+  body > * {
+    display: none !important;
+  }
+
+  .recipe-print-sheet {
+    position: static;
+    display: block !important;
+    width: auto;
+    min-height: auto;
+    padding: 0;
+  }
+}

@@ -4,6 +4,12 @@ A precision workspace for planning and scaling pizza dough by baking area,
 with round-steel and sheet-pan modes, baker&rsquo;s percentages, sourdough,
 commercial yeast, and hybrid formulas.
 
+Recipes can be named and saved locally, reopened, renamed, duplicated, shared
+by URL, copied as readable text, moved as versioned JSON, printed, or exported
+as a selectable-text PDF. The application has no account or server recipe
+store: the local library stays in the current browser, while share links carry
+the recipe source inputs in the URL and are not permanent hosted records.
+
 ## Stack
 
 | Concern    | Choice                                                      |
@@ -14,9 +20,10 @@ commercial yeast, and hybrid formulas.
 | Components | shadcn/ui on Base UI (`base-nova` style)                    |
 | Effects    | React Bits, via the shadcn registry                         |
 | Visuals    | SVG Dough Field + Vengeance UI Perspective Grid             |
-| Animation  | Motion                                                      |
+| Animation  | Motion + scoped Anime.js SVG timelines                      |
 | State      | Zustand                                                     |
 | Forms      | React Hook Form + Zod                                       |
+| Documents  | react-to-print + dynamically loaded React PDF               |
 
 ## Getting started
 
@@ -32,16 +39,29 @@ The app runs at http://localhost:3000.
 
 ## Scripts
 
-| Script              | Purpose                    |
-| ------------------- | -------------------------- |
-| `pnpm dev`          | Development server         |
-| `pnpm build`        | Production build           |
-| `pnpm start`        | Serve the production build |
-| `pnpm lint`         | ESLint                     |
-| `pnpm lint:fix`     | ESLint with autofix        |
-| `pnpm typecheck`    | `tsc --noEmit`             |
-| `pnpm format`       | Prettier write             |
-| `pnpm format:check` | Prettier check             |
+| Script              | Purpose                     |
+| ------------------- | --------------------------- |
+| `pnpm dev`          | Development server          |
+| `pnpm build`        | Production build            |
+| `pnpm start`        | Serve the production build  |
+| `pnpm lint`         | ESLint                      |
+| `pnpm lint:fix`     | ESLint with autofix         |
+| `pnpm typecheck`    | `tsc --noEmit`              |
+| `pnpm format`       | Prettier write              |
+| `pnpm format:check` | Prettier check              |
+| `pnpm test`         | Vitest unit/component tests |
+| `pnpm test:e2e`     | Playwright Chromium checks  |
+
+## Local data and portability
+
+- Draft inputs and saved recipes use browser `localStorage` with versioned,
+  Zod-validated document envelopes.
+- A valid shared `?r=` payload takes precedence over the local draft for that
+  page load, but is never automatically added to My Recipes.
+- JSON import validates and previews the recipe before applying it; importing
+  does not implicitly save it.
+- The web app manifest provides install metadata and icons. There is no service
+  worker, so the project does not claim offline support.
 
 ## Structure
 

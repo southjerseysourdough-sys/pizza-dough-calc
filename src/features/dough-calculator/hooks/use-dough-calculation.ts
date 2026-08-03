@@ -11,6 +11,8 @@ import {
 } from "../schemas/calculator-schema";
 import type { DoughCalculation, ValidationIssue } from "../types/dough";
 import { useCalculatorStore } from "../store/calculator-store";
+import { useRecipeLibraryStore } from "../store/recipe-library-store";
+import { readRecipeFromSearchParams } from "../utils/recipe-share";
 
 /**
  * Derives the recipe from current inputs.
@@ -73,6 +75,35 @@ export function useDoughCalculation(): {
  */
 export function useCalculatorPersistence(): void {
   useEffect(() => {
-    void useCalculatorStore.persist.rehydrate();
+    let active = true;
+    void (async () => {
+      await useCalculatorStore.persist.rehydrate();
+      if (!active) return;
+      useRecipeLibraryStore.getState().hydrate();
+
+      const shared = readRecipeFromSearchParams(
+        new URLSearchParams(window.location.search)
+      );
+      if (!shared) return;
+      if (shared.ok) {
+        useCalculatorStore.getState().applyRecipeDocument(shared.value);
+        const library = useRecipeLibraryStore.getState();
+        library.setActiveRecipeId(null);
+        library.setWorkingName(shared.value.name);
+        library.setInvalidShare(false);
+        library.setStatusMessage(
+          "Shared recipe loaded. It has not been saved to My Recipes."
+        );
+      } else {
+        const library = useRecipeLibraryStore.getState();
+        library.setInvalidShare(true);
+        library.setStatusMessage(
+          `${shared.message} Your current recipe was not changed.`
+        );
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, []);
 }

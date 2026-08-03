@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+import { ContextHelp, type ContextHelpContent } from "./context-help";
 
 /**
  * A measurement instrument: a label, a value capsule, and an optional rail.
@@ -32,6 +33,7 @@ type NumericFieldProps = {
   showRange?: boolean;
   disabled?: boolean;
   className?: string;
+  help?: ContextHelpContent;
 };
 
 function toDraft(value: number): string {
@@ -50,6 +52,7 @@ export function NumericField({
   showRange = false,
   disabled,
   className,
+  help,
 }: NumericFieldProps) {
   const inputId = useId();
   const hintId = useId();
@@ -87,12 +90,15 @@ export function NumericField({
   return (
     <div className={cn("flex flex-col gap-2.5", className)}>
       <div className="flex items-center justify-between gap-3">
-        <Label
-          htmlFor={inputId}
-          className="text-sm leading-tight font-medium text-foreground/90"
-        >
-          {label}
-        </Label>
+        <span className="flex items-center gap-1">
+          <Label
+            htmlFor={inputId}
+            className="text-sm leading-tight font-medium text-foreground/90"
+          >
+            {label}
+          </Label>
+          {help ? <ContextHelp content={help} /> : null}
+        </span>
 
         {/*
          * The value capsule. Focus-within moves the ring onto the whole

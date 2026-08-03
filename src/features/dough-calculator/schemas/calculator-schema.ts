@@ -30,6 +30,89 @@ const positiveNumber = z
   .finite("Enter a number.")
   .positive("Must be greater than zero.");
 
+const decimalRatio = z.number().finite().min(0);
+
+const doughSizingSelectionSchema = z.discriminatedUnion("mode", [
+  z.object({
+    mode: z.literal("dough-loading"),
+    doughLoadingGramsPerSquareInch: positiveNumber,
+  }),
+  z.object({
+    mode: z.literal("manual-dough-weight"),
+    doughWeightPerUnitGrams: positiveNumber,
+  }),
+]);
+
+const doughSizingInputSchema = z.discriminatedUnion("shape", [
+  z.object({
+    shape: z.literal("round"),
+    diameterInches: positiveNumber,
+    quantity: z.number().int().positive(),
+    selection: doughSizingSelectionSchema,
+  }),
+  z.object({
+    shape: z.literal("rectangular"),
+    usableInteriorLengthInches: positiveNumber,
+    usableInteriorWidthInches: positiveNumber,
+    quantity: z.number().int().positive(),
+    selection: doughSizingSelectionSchema,
+  }),
+]);
+
+const starterConfigurationSchema = z.object({
+  percentageOfTotalFlour: decimalRatio,
+  hydration: positiveNumber,
+});
+
+const leaveningInputSchema = z.discriminatedUnion("method", [
+  z.object({
+    method: z.literal("commercial-yeast"),
+    yeastType: z.enum(["instant-dry", "active-dry", "fresh"]),
+    yeastPercentage: decimalRatio,
+  }),
+  z.object({
+    method: z.literal("sourdough"),
+    starter: starterConfigurationSchema,
+  }),
+  z.object({
+    method: z.literal("hybrid"),
+    yeastType: z.enum(["instant-dry", "active-dry", "fresh"]),
+    yeastPercentage: decimalRatio,
+    starter: starterConfigurationSchema,
+  }),
+]);
+
+/**
+ * The single structural schema for durable engine input.
+ * Recipe documents, imports, shares and storage all compose this schema.
+ */
+export const doughFormulaInputSchema: z.ZodType<DoughFormulaInput> = z.object({
+  sizing: doughSizingInputSchema,
+  hydration: positiveNumber,
+  salt: decimalRatio,
+  fatType: z.enum(["none", "olive-oil", "neutral-oil", "tallow"]),
+  fat: decimalRatio,
+  sugar: decimalRatio,
+  malt: decimalRatio,
+  leavening: leaveningInputSchema,
+  customIngredients: z.array(
+    z.object({
+      id: z.string().min(1),
+      name: z.string().trim().min(1),
+      percentage: decimalRatio,
+    })
+  ),
+  flourBlend: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        name: z.string().trim().min(1),
+        percentage: decimalRatio,
+      })
+    )
+    .min(1),
+});
+
 export const flourBlendItemSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1, "Name the flour."),

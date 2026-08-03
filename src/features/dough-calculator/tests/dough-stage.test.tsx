@@ -175,9 +175,9 @@ describe("ingredient composition", () => {
   it("labels every segment with its exact weight", () => {
     renderWithProviders(<DoughCalculator />);
 
-    const composition = within(recipeRegion())
-      .getByText(/^composition$/i)
-      .closest("div") as HTMLElement;
+    const composition = within(recipeRegion()).getByRole("list", {
+      name: /ingredient composition/i,
+    });
 
     // Text labels and gram values, not colour alone.
     expect(within(composition).getByText("Flour")).toBeInTheDocument();

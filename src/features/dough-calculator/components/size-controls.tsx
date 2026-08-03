@@ -24,6 +24,7 @@ import {
 } from "../utils/format";
 import type { SizingResult } from "../types/dough";
 import { NumericField } from "./numeric-field";
+import { ContextHelp } from "./context-help";
 
 /**
  * Size and equipment controls for both formats.
@@ -90,7 +91,21 @@ export function SizeControls({ sizing }: { sizing: SizingResult | null }) {
           />
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="baking-surface">Baking surface</Label>
+            <span className="flex items-center gap-1">
+              <Label htmlFor="baking-surface">Baking surface</Label>
+              <ContextHelp
+                content={{
+                  term: "Baking Steel fit",
+                  definition:
+                    "The selected surface is checked against the pizza diameter for physical fit.",
+                  effect:
+                    "It changes fit guidance only, never the dough formula.",
+                  current:
+                    STEEL_PROFILES.find((profile) => profile.id === surfaceId)
+                      ?.name ?? "Custom surface",
+                }}
+              />
+            </span>
             <Select
               value={surfaceId}
               onValueChange={(next) => {
@@ -162,12 +177,24 @@ export function SizeControls({ sizing }: { sizing: SizingResult | null }) {
           )}
 
           <div className="surface-instrument flex items-start justify-between gap-3 px-3 py-2.5">
-            <Label
-              htmlFor="pan-measured"
-              className="text-sm leading-snug font-normal"
-            >
-              I measured the flat inside baking surface of this pan
-            </Label>
+            <span className="flex items-center gap-1">
+              <Label
+                htmlFor="pan-measured"
+                className="text-sm leading-snug font-normal"
+              >
+                I measured the flat inside baking surface of this pan
+              </Label>
+              <ContextHelp
+                content={{
+                  term: "Measured pan interior",
+                  definition:
+                    "Only the flat interior baking surface contributes to the calculated pizza area.",
+                  effect:
+                    "Accurate length and width produce accurate dough weight.",
+                  current: `${values.usableInteriorLengthInches} by ${values.usableInteriorWidthInches} inches`,
+                }}
+              />
+            </span>
             <Switch
               id="pan-measured"
               checked={panInteriorMeasured}
@@ -258,6 +285,14 @@ export function SizeControls({ sizing }: { sizing: SizingResult | null }) {
               max={8}
               step={0.05}
               hint="Grams of dough per square inch of baking surface. Higher means a thicker crust."
+              help={{
+                term: "Dough loading",
+                definition:
+                  "How much dough is assigned to each square inch of baking area.",
+                effect:
+                  "Higher loading makes a thicker pizza and increases total dough.",
+                current: `${values.doughLoadingGramsPerSquareInch.toFixed(2)} g per square inch`,
+              }}
               onChange={(doughLoadingGramsPerSquareInch) =>
                 setValues({ doughLoadingGramsPerSquareInch })
               }
