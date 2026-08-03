@@ -1,26 +1,30 @@
-import Link from "next/link";
+import { siteConfig } from "@/config/site";
 
-import { APP_NAME, NAV_ITEMS } from "@/lib/constants";
+import { ThemeToggle } from "./theme-toggle";
 
+/**
+ * Product header. Server rendered apart from the theme control, which is the
+ * only interactive part and the only thing here that ships JavaScript.
+ */
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b border-foreground/10 bg-background/80 backdrop-blur">
-      <div className="mx-auto flex h-14 w-full max-w-5xl items-center gap-6 px-6">
-        <Link href="/" className="font-heading text-sm font-semibold">
-          {APP_NAME}
-        </Link>
+    <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur">
+      <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+        <div className="flex min-w-0 flex-col leading-tight">
+          <span className="truncate font-heading text-sm font-semibold">
+            {siteConfig.name}
+          </span>
+          <span className="truncate text-[11px] tracking-wide text-muted-foreground uppercase">
+            {siteConfig.brand}
+          </span>
+        </div>
 
-        <nav aria-label="Main" className="flex items-center gap-4">
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        <div className="flex shrink-0 items-center gap-3">
+          <span className="hidden text-xs text-muted-foreground md:block">
+            Grams · Baker&rsquo;s percentages
+          </span>
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   );

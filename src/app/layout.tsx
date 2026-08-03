@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { Providers } from "@/components/providers";
-import { APP_DESCRIPTION, APP_NAME } from "@/lib/constants";
-import { env } from "@/lib/env";
+import { siteConfig } from "@/config/site";
 
 import "./globals.css";
 
@@ -18,13 +17,37 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+/**
+ * Open Graph and Twitter images are supplied by the `opengraph-image` file
+ * convention in this directory, so they are not listed here.
+ */
 export const metadata: Metadata = {
-  metadataBase: new URL(env.NEXT_PUBLIC_APP_URL),
+  metadataBase: new URL(siteConfig.url),
   title: {
-    default: APP_NAME,
-    template: `%s · ${APP_NAME}`,
+    default: siteConfig.seo.title,
+    template: siteConfig.seo.titleTemplate,
   },
-  description: APP_DESCRIPTION,
+  description: siteConfig.seo.description,
+  applicationName: siteConfig.name,
+  authors: [{ name: siteConfig.brand }],
+  creator: siteConfig.brand,
+  publisher: siteConfig.brand,
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    siteName: siteConfig.name,
+    title: siteConfig.seo.title,
+    description: siteConfig.seo.description,
+    url: "/",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteConfig.seo.title,
+    description: siteConfig.seo.description,
+  },
 };
 
 export default function RootLayout({
@@ -33,8 +56,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    // next-themes writes the theme class onto <html> before paint, which the
+    // server cannot know about. suppressHydrationWarning scopes React's
+    // complaint to this one element rather than silencing anything real.
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
