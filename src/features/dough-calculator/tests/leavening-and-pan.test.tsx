@@ -1,7 +1,11 @@
 import { screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { numberInput, recipeRegion } from "@/test/calculator-queries";
+import {
+  numberInput,
+  openLedger,
+  recipeRegion,
+} from "@/test/calculator-queries";
 import {
   renderWithProviders,
   resetCalculatorStore,
@@ -62,9 +66,17 @@ describe("sourdough mode", () => {
     expect(screen.queryByRole("spinbutton", { name: /^yeast$/i })).toBeNull();
   });
 
-  it("reports the starter breakdown in the recipe", () => {
+  it("names the starter in the composition without opening anything", () => {
     chooseLeavening("sourdough");
     renderWithProviders(<DoughCalculator />);
+
+    expect(recipeRegion()).toHaveTextContent(/sourdough starter/i);
+  });
+
+  it("reports the full starter breakdown in the ledger", async () => {
+    chooseLeavening("sourdough");
+    const { user } = renderWithProviders(<DoughCalculator />);
+    await openLedger(user);
 
     expect(recipeRegion()).toHaveTextContent(/total starter/i);
     expect(recipeRegion()).toHaveTextContent(/starter flour/i);
@@ -98,12 +110,16 @@ describe("hybrid mode", () => {
     expect(numberInput(/^yeast$/i)).toBeInTheDocument();
   });
 
-  it("includes both leaveners in the recipe", () => {
+  it("includes both leaveners in the recipe", async () => {
     chooseLeavening("hybrid");
-    renderWithProviders(<DoughCalculator />);
+    const { user } = renderWithProviders(<DoughCalculator />);
 
-    expect(recipeRegion()).toHaveTextContent(/total starter/i);
+    // Both appear in the composition at a glance.
+    expect(recipeRegion()).toHaveTextContent(/sourdough starter/i);
     expect(recipeRegion()).toHaveTextContent(/commercial yeast/i);
+
+    await openLedger(user);
+    expect(recipeRegion()).toHaveTextContent(/total starter/i);
   });
 });
 
@@ -112,7 +128,7 @@ describe("pan measurement confirmation", () => {
     user: ReturnType<typeof renderWithProviders>["user"]
   ) {
     await user.click(
-      screen.getByRole("tab", { name: /sicilian or sheet pan/i })
+      screen.getByRole("radio", { name: /sicilian or sheet pan/i })
     );
   }
 
@@ -194,7 +210,7 @@ describe("sheet pan dough loading advisories", () => {
     useCalculatorStore.getState().setShowAdvanced(true);
     const { user } = renderWithProviders(<DoughCalculator />);
     await user.click(
-      screen.getByRole("tab", { name: /sicilian or sheet pan/i })
+      screen.getByRole("radio", { name: /sicilian or sheet pan/i })
     );
 
     const loading = numberInput(/dough loading/i);
@@ -205,7 +221,7 @@ describe("sheet pan dough loading advisories", () => {
       .getAllByRole("listitem")
       .map((item) => item.textContent ?? "");
 
-    expect(notes.some((text) => /note:/i.test(text))).toBe(true);
+    expect(notes.some((text) => /note/i.test(text))).toBe(true);
     expect(notes.some((text) => /heavy pan dough/i.test(text))).toBe(true);
   });
 });

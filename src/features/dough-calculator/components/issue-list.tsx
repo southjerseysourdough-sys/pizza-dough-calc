@@ -7,48 +7,45 @@ import { cn } from "@/lib/utils";
 import type { ValidationIssue, ValidationSeverity } from "../types/dough";
 
 /**
- * Each severity gets its own icon and text prefix as well as its own colour,
- * so the three are still distinguishable in greyscale or with any form of
- * colour blindness.
+ * Errors, advisories and notes.
+ *
+ * Severity is carried by icon, heading word and surface — never colour alone —
+ * so the distinction survives greyscale and any form of colour blindness.
+ *
+ * Red is reserved for input the engine actually rejected. An advisory about a
+ * large pizza on a small steel is a warm amber note, because the calculation
+ * is perfectly valid and nothing needs fixing.
  */
 const PRESENTATION: Record<
   ValidationSeverity,
-  { Icon: typeof InfoIcon; tone: string; iconTone: string; prefix: string }
+  {
+    Icon: typeof InfoIcon;
+    surface: string;
+    iconTone: string;
+    heading: string;
+  }
 > = {
   error: {
     Icon: CircleAlertIcon,
-    tone: "bg-destructive/8 text-foreground ring-destructive/25",
+    surface:
+      "bg-destructive/8 ring-1 ring-destructive/25 rounded-xl text-foreground",
     iconTone: "text-destructive",
-    prefix: "Error: ",
+    heading: "Check this value",
   },
   warning: {
     Icon: AlertTriangleIcon,
-    tone: "bg-warning-surface/60 text-foreground ring-warning/25",
+    surface: "surface-warning text-foreground",
     iconTone: "text-warning",
-    prefix: "Heads up: ",
+    heading: "Worth knowing",
   },
   info: {
     Icon: InfoIcon,
-    tone: "bg-muted/60 text-foreground ring-border",
+    surface: "surface-inset text-foreground",
     iconTone: "text-muted-foreground",
-    prefix: "Note: ",
+    heading: "Note",
   },
 };
 
-/**
- * Errors and advisory warnings.
- *
- * Severity is never carried by colour alone: each entry pairs a distinct icon
- * with a text prefix naming the severity, so the distinction survives
- * greyscale, low vision and colour blindness.
- *
- * Entries animate in and out as the recipe changes, which is the one place in
- * the calculator where motion earns its keep — it shows that something new
- * appeared rather than having always been there. `AnimatePresence` is given
- * `initial={false}` so anything present on first paint renders immediately at
- * full opacity; only later changes animate. Nothing here can hide
- * server-rendered content.
- */
 export function IssueList({
   issues,
   className,
@@ -62,7 +59,8 @@ export function IssueList({
     <ul className={cn("flex flex-col gap-2", className)}>
       <AnimatePresence initial={false}>
         {issues.map((issue) => {
-          const { Icon, tone, iconTone, prefix } = PRESENTATION[issue.severity];
+          const { Icon, surface, iconTone, heading } =
+            PRESENTATION[issue.severity];
 
           return (
             <motion.li
@@ -80,19 +78,20 @@ export function IssueList({
                   : { opacity: 0, y: -4, scale: 0.99 }
               }
               transition={{ duration: prefersReducedMotion ? 0 : 0.18 }}
-              className={cn(
-                "flex gap-2.5 rounded-lg px-3 py-2 text-sm ring-1",
-                tone
-              )}
+              className={cn("flex gap-3 px-3.5 py-3", surface)}
             >
               <Icon
                 aria-hidden="true"
                 className={cn("mt-0.5 size-4 shrink-0", iconTone)}
               />
-              <span>
-                <span className="font-medium">{prefix}</span>
-                {issue.message}
-              </span>
+              <div className="flex min-w-0 flex-col gap-1">
+                <span className="text-sm leading-tight font-semibold">
+                  {heading}
+                </span>
+                <span className="text-sm leading-snug text-foreground/85">
+                  {issue.message}
+                </span>
+              </div>
             </motion.li>
           );
         })}

@@ -1,6 +1,11 @@
 "use client";
 
-import SpotlightCard from "@/components/effects/SpotlightCard";
+import { ChevronDownIcon } from "lucide-react";
+import { useReducedMotion } from "motion/react";
+import { useState } from "react";
+
+import BorderGlow from "@/components/effects/BorderGlow";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import type { DoughFormulaResult } from "../types/dough";
 import {
@@ -9,17 +14,23 @@ import {
   formatPercentage,
   formatTotalWeight,
 } from "../utils/format";
+import { AnimatedNumber } from "./animated-number";
+import { CompositionBar } from "./composition-bar";
 import { IssueList } from "./issue-list";
 
 /**
- * The live recipe.
+ * The signature result.
  *
- * Recalculates on every keystroke, which is why there is no Calculate button.
- * Values are rendered with tabular figures so digits do not jitter as they
- * update.
+ * Three layers, deliberately unequal:
+ *  1. the headline — what the baker came for, at instrument scale
+ *  2. the composition — the shape of the formula at a glance
+ *  3. the full ledger — every exact value, one disclosure away
+ *
+ * Nothing is removed by the layering: the ledger holds the same figures it
+ * always did, it simply stops competing with the headline.
  */
 
-function SummaryRow({
+function LedgerRow({
   label,
   value,
   detail,
@@ -31,7 +42,7 @@ function SummaryRow({
   emphasis?: boolean;
 }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 py-2">
+    <div className="flex items-baseline justify-between gap-4 py-1.5">
       <div className="flex min-w-0 flex-col">
         <span
           className={cn(
@@ -42,15 +53,15 @@ function SummaryRow({
           {label}
         </span>
         {detail ? (
-          <span className="text-xs text-muted-foreground">{detail}</span>
+          <span className="text-xs text-muted-foreground/80">{detail}</span>
         ) : null}
       </div>
       <span
         className={cn(
           "tabular shrink-0",
           emphasis
-            ? "text-base font-semibold text-foreground"
-            : "text-sm text-foreground"
+            ? "text-sm font-semibold text-foreground"
+            : "text-sm text-foreground/90"
         )}
       >
         {value}
@@ -59,162 +70,220 @@ function SummaryRow({
   );
 }
 
-function SectionHeading({ children }: { children: React.ReactNode }) {
+function LedgerSection({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="mt-4 mb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+    <h4 className="mt-4 mb-1 text-[0.7rem] font-semibold tracking-[0.12em] text-muted-foreground/80 uppercase">
       {children}
-    </h3>
+    </h4>
   );
 }
 
 export function RecipeSummary({
   result,
   shape,
+  styleLabel,
   className,
 }: {
   result: DoughFormulaResult;
   shape: "round" | "rectangular";
+  /** The preset name, e.g. "New York on Baking Steel Plus". */
+  styleLabel: string;
   className?: string;
 }) {
+  const [showLedger, setShowLedger] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
+  // Pointer-driven edge light is pointless on touch, where nothing hovers.
+  const hasFinePointer = useMediaQuery("(hover: hover) and (pointer: fine)");
+
   const { sizing, starter } = result;
   const unitNoun = shape === "round" ? "pizza" : "pan";
+  const unitLabel = `${sizing.quantity} ${unitNoun}${sizing.quantity === 1 ? "" : "s"}`;
 
-  // The engine returns the starter alongside the other ingredients; it is
-  // pulled out here so it can be shown once, in its own section.
+  // The starter is pulled out of the main list so it can be shown once, in
+  // its own section, without being counted twice.
   const mainDoughIngredients = result.ingredients.filter(
     (ingredient) => ingredient.kind !== "starter"
   );
 
+  const sizeLabel =
+    shape === "round"
+      ? `${formatArea(sizing.areaPerUnitSquareInches)} each`
+      : `${formatArea(sizing.areaPerUnitSquareInches)} pan`;
+
   return (
-    <SpotlightCard className={cn("p-5", className)}>
-      {/* aria-live keeps screen reader users informed as values change, but
-          "polite" so it never interrupts mid-edit. */}
-      {/* A named landmark, so the recipe can be jumped to directly rather
-          than waded through from the top of the controls. */}
+    <BorderGlow
+      className={cn("w-full", className)}
+      borderRadius={20}
+      glowRadius={30}
+      coneSpread={22}
+      fillOpacity={0.35}
+      // Pointer-only: never animates on its own, and switched off entirely
+      // under reduced motion or on touch.
+      animated={false}
+      disabled={Boolean(prefersReducedMotion) || !hasFinePointer}
+    >
       <section
         role="region"
         aria-labelledby="recipe-summary-heading"
         aria-live="polite"
         aria-atomic="false"
+        className="flex flex-col p-5"
       >
-        <div className="flex items-baseline justify-between gap-3">
+        <div className="flex items-center justify-between gap-3">
           <h2
             id="recipe-summary-heading"
-            className="font-heading text-base font-semibold"
+            className="text-[0.7rem] font-semibold tracking-[0.14em] text-muted-foreground uppercase"
           >
             Your recipe
           </h2>
-          <span className="text-xs text-muted-foreground">
-            {sizing.quantity} {unitNoun}
-            {sizing.quantity === 1 ? "" : "s"}
+          <span className="tabular text-xs text-muted-foreground">
+            {unitLabel}
           </span>
         </div>
 
-        <div className="mt-3 rounded-lg bg-muted/50 px-3 py-2">
-          <SummaryRow
-            label="Total dough"
-            value={formatTotalWeight(result.totalDoughWeightGrams)}
-            detail={`${formatTotalWeight(sizing.doughWeightPerUnitGrams)} per ${unitNoun} · ${formatArea(sizing.areaPerUnitSquareInches)}`}
-            emphasis
+        {/* LAYER ONE — the headline. */}
+        <div className="mt-3 flex flex-col gap-1">
+          <AnimatedNumber
+            value={result.totalDoughWeightGrams}
+            format={formatTotalWeight}
+            className="text-[2.75rem] leading-none font-semibold tracking-tight text-foreground"
           />
+          <p className="text-sm font-medium text-foreground/85">
+            {unitLabel} · {formatTotalWeight(sizing.doughWeightPerUnitGrams)}{" "}
+            each
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {formatPercentage(result.trueFinalHydration)} hydration ·{" "}
+            {sizeLabel}
+          </p>
+          <p className="mt-0.5 truncate text-xs text-ember">{styleLabel}</p>
         </div>
 
-        {/*
-         * Main dough excludes the starter row: the starter gets its own
-         * section below. Listing it in both places would read as though the
-         * baker has to weigh it twice.
-         */}
-        <SectionHeading>Main dough</SectionHeading>
-        <div className="divide-y divide-border">
-          {mainDoughIngredients.map((ingredient) => (
-            <SummaryRow
-              key={ingredient.id}
-              label={ingredient.label}
-              value={`${formatIngredientGrams(ingredient.grams, ingredient.kind)} g`}
-              detail={
-                ingredient.kind === "flour"
-                  ? "Added flour, excluding any in the starter"
-                  : formatPercentage(ingredient.bakersPercentage)
-              }
-            />
-          ))}
-        </div>
-
-        {result.flourBlend.length > 1 ? (
-          <>
-            <SectionHeading>Main dough flour blend</SectionHeading>
-            <div className="divide-y divide-border">
-              {result.flourBlend.map((flour) => (
-                <SummaryRow
-                  key={flour.id}
-                  label={flour.name || "Unnamed flour"}
-                  value={`${formatIngredientGrams(flour.grams, "flour")} g`}
-                  detail={formatPercentage(flour.percentage)}
-                />
-              ))}
-            </div>
-          </>
-        ) : null}
-
-        {starter ? (
-          <>
-            <SectionHeading>Starter</SectionHeading>
-            <div className="divide-y divide-border">
-              <SummaryRow
-                label="Total starter"
-                value={`${formatIngredientGrams(starter.weightGrams, "starter")} g`}
-                detail="Weigh this out as one piece"
-                emphasis
-              />
-              <SummaryRow
-                label="Starter flour"
-                value={`${formatIngredientGrams(starter.flourGrams, "flour")} g`}
-                detail="Already counted in total flour"
-              />
-              <SummaryRow
-                label="Starter water"
-                value={`${formatIngredientGrams(starter.waterGrams, "water")} g`}
-                detail="Already counted in total water"
-              />
-              <SummaryRow
-                label="Prefermented flour"
-                value={formatPercentage(starter.prefermentedFlourPercentage)}
-              />
-            </div>
-          </>
-        ) : null}
-
-        <SectionHeading>Totals</SectionHeading>
-        <div className="divide-y divide-border">
-          <SummaryRow
-            label="Total formula flour"
-            value={`${formatIngredientGrams(result.totalFlourGrams, "flour")} g`}
-            detail="Including any flour inside the starter"
-          />
-          <SummaryRow
-            label="Total formula water"
-            value={`${formatIngredientGrams(result.totalWaterGrams, "water")} g`}
-            detail="Including any water inside the starter"
-          />
-          <SummaryRow
-            label="True hydration"
-            value={formatPercentage(result.trueFinalHydration)}
-          />
-          <SummaryRow
-            label={`Dough per ${unitNoun}`}
-            value={formatTotalWeight(sizing.doughWeightPerUnitGrams)}
-          />
-          <SummaryRow
-            label="Total dough weight"
-            value={formatTotalWeight(result.totalDoughWeightGrams)}
-            emphasis
-          />
+        {/* LAYER TWO — the shape of the formula. */}
+        <div className="mt-5">
+          <h3 className="mb-2.5 text-[0.7rem] font-semibold tracking-[0.12em] text-muted-foreground/80 uppercase">
+            Composition
+          </h3>
+          <CompositionBar result={result} />
         </div>
 
         {result.warnings.length > 0 ? (
           <IssueList issues={result.warnings} className="mt-4" />
         ) : null}
+
+        {/* LAYER THREE — every exact value, one click away. */}
+        <div className="mt-4 border-t border-hairline/40 pt-3">
+          <button
+            type="button"
+            onClick={() => setShowLedger((open) => !open)}
+            aria-expanded={showLedger}
+            aria-controls="recipe-ledger"
+            className="flex w-full items-center justify-between gap-2 rounded-md py-1 text-sm font-medium text-foreground/85 transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+          >
+            <span>Full ingredient ledger</span>
+            <ChevronDownIcon
+              aria-hidden="true"
+              className={cn(
+                "size-4 shrink-0 text-muted-foreground transition-transform",
+                showLedger && "rotate-180"
+              )}
+            />
+          </button>
+
+          {showLedger ? (
+            <div id="recipe-ledger" className="pb-1">
+              <LedgerSection>Main dough</LedgerSection>
+              <div className="divide-y divide-hairline/30">
+                {mainDoughIngredients.map((ingredient) => (
+                  <LedgerRow
+                    key={ingredient.id}
+                    label={ingredient.label}
+                    value={`${formatIngredientGrams(ingredient.grams, ingredient.kind)} g`}
+                    detail={
+                      ingredient.kind === "flour"
+                        ? "Added flour, excluding any in the starter"
+                        : formatPercentage(ingredient.bakersPercentage)
+                    }
+                  />
+                ))}
+              </div>
+
+              {result.flourBlend.length > 1 ? (
+                <>
+                  <LedgerSection>Main dough flour blend</LedgerSection>
+                  <div className="divide-y divide-hairline/30">
+                    {result.flourBlend.map((flour) => (
+                      <LedgerRow
+                        key={flour.id}
+                        label={flour.name || "Unnamed flour"}
+                        value={`${formatIngredientGrams(flour.grams, "flour")} g`}
+                        detail={formatPercentage(flour.percentage)}
+                      />
+                    ))}
+                  </div>
+                </>
+              ) : null}
+
+              {starter ? (
+                <>
+                  <LedgerSection>Starter</LedgerSection>
+                  <div className="divide-y divide-hairline/30">
+                    <LedgerRow
+                      label="Total starter"
+                      value={`${formatIngredientGrams(starter.weightGrams, "starter")} g`}
+                      detail="Weigh this out as one piece"
+                      emphasis
+                    />
+                    <LedgerRow
+                      label="Starter flour"
+                      value={`${formatIngredientGrams(starter.flourGrams, "flour")} g`}
+                      detail="Already counted in total flour"
+                    />
+                    <LedgerRow
+                      label="Starter water"
+                      value={`${formatIngredientGrams(starter.waterGrams, "water")} g`}
+                      detail="Already counted in total water"
+                    />
+                    <LedgerRow
+                      label="Prefermented flour"
+                      value={formatPercentage(
+                        starter.prefermentedFlourPercentage
+                      )}
+                    />
+                  </div>
+                </>
+              ) : null}
+
+              <LedgerSection>Totals</LedgerSection>
+              <div className="divide-y divide-hairline/30">
+                <LedgerRow
+                  label="Total formula flour"
+                  value={`${formatIngredientGrams(result.totalFlourGrams, "flour")} g`}
+                  detail="Including any flour inside the starter"
+                />
+                <LedgerRow
+                  label="Total formula water"
+                  value={`${formatIngredientGrams(result.totalWaterGrams, "water")} g`}
+                  detail="Including any water inside the starter"
+                />
+                <LedgerRow
+                  label="True hydration"
+                  value={formatPercentage(result.trueFinalHydration)}
+                />
+                <LedgerRow
+                  label={`Dough per ${unitNoun}`}
+                  value={formatTotalWeight(sizing.doughWeightPerUnitGrams)}
+                />
+                <LedgerRow
+                  label="Total dough weight"
+                  value={formatTotalWeight(result.totalDoughWeightGrams)}
+                  emphasis
+                />
+              </div>
+            </div>
+          ) : null}
+        </div>
       </section>
-    </SpotlightCard>
+    </BorderGlow>
   );
 }

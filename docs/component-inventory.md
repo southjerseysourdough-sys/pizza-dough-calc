@@ -60,22 +60,71 @@ places, all noted in its header comment:
 4. Widened `spotlightColor` from an `rgba(...)` template literal type to
    `string`, so a `color-mix` token value can be passed.
 
+### BorderGlow
+
+| Field           | Value                                                                                                      |
+| --------------- | ---------------------------------------------------------------------------------------------------------- |
+| Library         | React Bits (free registry)                                                                                 |
+| Display name    | Border Glow                                                                                                |
+| Documentation   | https://reactbits.dev                                                                                      |
+| Registry entry  | https://reactbits.dev/r/BorderGlow-TS-TW                                                                   |
+| Install command | `pnpm dlx shadcn@latest add @react-bits/BorderGlow-TS-TW --path src/components/effects`                    |
+| Local path      | `src/components/effects/BorderGlow.tsx`                                                                    |
+| Dependencies    | None. The registry entry declares `"dependencies": []`, and installing it added nothing to `package.json`. |
+| Used in         | `src/features/dough-calculator/components/recipe-summary.tsx` — the result surface only                    |
+
+**Why this one.** The recipe result had to become the strongest surface on the
+page, and BorderGlow computes edge proximity and cursor angle to throw a light
+cone at whichever edge the pointer is nearest. Retinted to ember that reads as
+heat coming off the edge of a steel rather than as a neon border. It is the
+only surface using it — nothing else on the page glows.
+
+**Reduced motion.** `animated` is left false, so there is no opening sweep and
+no render loop; the glow only responds to pointer position. The `disabled`
+prop switches it off completely under `prefers-reduced-motion`.
+
+**Mobile.** Also disabled when the device has no fine pointer, since a hover
+effect can never fire on touch. The card falls back to a plain token surface
+with no layout or readability difference.
+
+**Local modifications** — four, all noted in the file header:
+
+1. Added `"use client"`, absent from the registry source despite hook usage.
+2. Retuned every default from the shipped `#c084fc` / `#f472b6` / `#38bdf8`
+   mesh and `#120F17` fill to ember, crust, steel and workbench tokens.
+3. Replaced `border-white/15` and a six-layer hardcoded black drop shadow with
+   token equivalents, so it works in light as well as dark.
+4. Added the `disabled` prop, and moved the opening sweep's first `setState`
+   into a `requestAnimationFrame` callback — calling it straight from the
+   effect body trips React's `set-state-in-effect` rule.
+
 ---
 
 ## Reviewed and rejected
 
 Each candidate below was fetched from its registry and read before deciding.
 
-| Candidate            | Library      | Verdict                                                                                                                                                                                                                                               |
-| -------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Grainient**        | React Bits   | Rejected. Declares `ogl@^1.0.11`, adding a second WebGL runtime beside the `three` already installed for the R3F layer. Duplicate cost, one job.                                                                                                      |
-| **Animated Content** | React Bits   | Rejected. Declares `gsap@^3.13.0`, duplicating animation capability that `motion` already provides.                                                                                                                                                   |
-| **Fade Content**     | React Bits   | Rejected. Same `gsap@^3.13.0` dependency, for an entrance fade Motion does in three lines.                                                                                                                                                            |
-| **Electric Border**  | React Bits   | Rejected. Zero dependencies, but it is a continuously glowing animated border — explicitly on the design brief's avoid list.                                                                                                                          |
-| **Animated Rays**    | Vengeance UI | Rejected. Zero dependencies, but the source hardcodes a `#60a5fa` / `#e879f9` / `#5eead4` blue-fuchsia-teal gradient: the generic-SaaS look the brief rules out. It also references an `animate-aurora-bg` keyframe the registry entry does not ship. |
-| **Perspective Grid** | Vengeance UI | Rejected. Verified to exist with zero dependencies, but it serves the same atmospheric purpose as the R3F layer, and the brief forbids using two libraries for one visual purpose.                                                                    |
-| **Glow Border Card** | Vengeance UI | Rejected. Verified to exist with zero dependencies, but it overlaps with SpotlightCard, and a constant glowing border is on the avoid list.                                                                                                           |
-| **Kinetic Loader**   | Vengeance UI | **Does not exist.** `https://www.vengenceui.com/r/kinetic-loader.json` returns HTTP 404. The name appears in the brief's candidate list but maps to no registry slug.                                                                                 |
+| Candidate                                 | Library      | Verdict                                                                                                                                                                                                                                                                                                                                                                |
+| ----------------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Grainient**                             | React Bits   | Rejected. Declares `ogl@^1.0.11`, adding a second WebGL runtime beside the `three` already installed for the R3F layer. Duplicate cost, one job.                                                                                                                                                                                                                       |
+| **Animated Content**                      | React Bits   | Rejected. Declares `gsap@^3.13.0`, duplicating animation capability that `motion` already provides.                                                                                                                                                                                                                                                                    |
+| **Fade Content**                          | React Bits   | Rejected. Same `gsap@^3.13.0` dependency, for an entrance fade Motion does in three lines.                                                                                                                                                                                                                                                                             |
+| **Electric Border**                       | React Bits   | Rejected. Zero dependencies, but it is a continuously glowing animated border — explicitly on the design brief's avoid list.                                                                                                                                                                                                                                           |
+| **Animated Rays**                         | Vengeance UI | Rejected. Zero dependencies, but the source hardcodes a `#60a5fa` / `#e879f9` / `#5eead4` blue-fuchsia-teal gradient: the generic-SaaS look the brief rules out. It also references an `animate-aurora-bg` keyframe the registry entry does not ship.                                                                                                                  |
+| **Perspective Grid**                      | Vengeance UI | Rejected. Verified to exist with zero dependencies, but it serves the same atmospheric purpose as the R3F layer, and the brief forbids using two libraries for one visual purpose.                                                                                                                                                                                     |
+| **Glow Border Card**                      | Vengeance UI | Rejected. Verified to exist with zero dependencies, but it overlaps with SpotlightCard, and a constant glowing border is on the avoid list.                                                                                                                                                                                                                            |
+| **Kinetic Loader**                        | Vengeance UI | **Does not exist.** `https://www.vengenceui.com/r/kinetic-loader.json` returns HTTP 404. The name appears in the brief's candidate list but maps to no registry slug.                                                                                                                                                                                                  |
+| **Animated Number**                       | Vengeance UI | Rejected on dependencies and quality. It declares `framer-motion` as a direct dependency, duplicating the installed `motion` package, and it splits `value.toString()` into index-keyed digits, so it cannot carry a unit suffix or a decimal — "1.69 kg" is unrepresentable. Implemented instead with Motion's `useSpring` / `useTransform` in `animated-number.tsx`. |
+| **Perspective Grid**                      | Vengeance UI | Verified present with zero dependencies, but the page already has a warm/steel CSS atmosphere layer and the R3F dough stage. A third atmospheric system would be the "page covered in effects" the brief rules out.                                                                                                                                                    |
+| **Glow Border Card**                      | Vengeance UI | Verified present with zero dependencies, but React Bits BorderGlow now fills that role, and the brief explicitly says not to install both.                                                                                                                                                                                                                             |
+| **Light Lines**                           | Vengeance UI | Verified present with zero dependencies. Not installed: it solves no problem this design has.                                                                                                                                                                                                                                                                          |
+| **Wave Grid**, **Fluid Morph Background** | Vengeance UI | **Do not exist.** Both return HTTP 404 from the registry.                                                                                                                                                                                                                                                                                                              |
+| **GlareHover**, **GradualBlur**           | React Bits   | Verified present with zero dependencies, but the brief caps React Bits at two components, and SpotlightCard plus BorderGlow already cover pointer illumination and the signature result surface.                                                                                                                                                                       |
+
+**No Vengeance UI component is installed in this phase.** Every candidate
+either duplicated something already present, added a redundant dependency, or
+did not exist. Per the brief's fallback clause, the one interaction that
+mattered — the animated result number — was implemented with Motion instead.
 
 ---
 

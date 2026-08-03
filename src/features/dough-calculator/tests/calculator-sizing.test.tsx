@@ -27,7 +27,7 @@ describe("format switching", () => {
     expect(numberInput(/pizza diameter/i)).toBeInTheDocument();
 
     await user.click(
-      screen.getByRole("tab", { name: /sicilian or sheet pan/i })
+      screen.getByRole("radio", { name: /sicilian or sheet pan/i })
     );
 
     expect(
@@ -43,7 +43,7 @@ describe("format switching", () => {
     expect(recipeRegion()).toHaveTextContent(/1 pizza/i);
 
     await user.click(
-      screen.getByRole("tab", { name: /sicilian or sheet pan/i })
+      screen.getByRole("radio", { name: /sicilian or sheet pan/i })
     );
 
     expect(recipeRegion()).toHaveTextContent(/1 pan/i);
@@ -53,9 +53,9 @@ describe("format switching", () => {
     const { user } = renderWithProviders(<DoughCalculator />);
 
     await user.click(
-      screen.getByRole("tab", { name: /sicilian or sheet pan/i })
+      screen.getByRole("radio", { name: /sicilian or sheet pan/i })
     );
-    await user.click(screen.getByRole("tab", { name: /round on steel/i }));
+    await user.click(screen.getByRole("radio", { name: /round on steel/i }));
 
     expect(numberInput(/pizza diameter/i)).toBeInTheDocument();
   });

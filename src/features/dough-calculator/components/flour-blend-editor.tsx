@@ -157,7 +157,7 @@ export function FlourBlendEditor({
           return (
             <li
               key={flour.id}
-              className="flex flex-col gap-2 rounded-lg bg-muted/40 p-3 sm:flex-row sm:items-end sm:gap-3"
+              className="surface-instrument flex flex-col gap-2 p-3 sm:flex-row sm:items-end sm:gap-3"
             >
               <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                 <Label
@@ -300,7 +300,7 @@ export function FlourBlendEditor({
       ) : null}
 
       {result ? (
-        <div className="divide-y divide-border rounded-lg bg-muted/40 px-3 py-1.5">
+        <div className="surface-inset divide-y divide-hairline/30 px-3 py-1.5">
           <AccountingRow
             label="Total formula flour"
             value={`${formatIngredientGrams(result.totalFlourGrams, "flour")} g`}

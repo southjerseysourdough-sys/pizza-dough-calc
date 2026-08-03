@@ -74,7 +74,7 @@ describe("reduced motion", () => {
     expect(recipeRegion()).toBeInTheDocument();
     expect(recipeRegion()).toHaveTextContent("563 g");
     expect(
-      screen.getByRole("tab", { name: /round on steel/i })
+      screen.getByRole("radio", { name: /round on steel/i })
     ).toBeInTheDocument();
     expect(
       screen.getByRole("spinbutton", { name: /pizza diameter/i })

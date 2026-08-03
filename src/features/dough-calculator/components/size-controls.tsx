@@ -161,7 +161,7 @@ export function SizeControls({ sizing }: { sizing: SizingResult | null }) {
             </div>
           )}
 
-          <div className="flex items-start justify-between gap-3 rounded-lg bg-muted/50 px-3 py-2.5">
+          <div className="surface-instrument flex items-start justify-between gap-3 px-3 py-2.5">
             <Label
               htmlFor="pan-measured"
               className="text-sm leading-snug font-normal"
@@ -220,7 +220,7 @@ export function SizeControls({ sizing }: { sizing: SizingResult | null }) {
       />
 
       {showAdvanced ? (
-        <div className="flex flex-col gap-4 rounded-lg bg-muted/40 p-4">
+        <div className="surface-instrument flex flex-col gap-4 p-4">
           <div className="flex items-center justify-between gap-4">
             <Label htmlFor="manual-weight-toggle" className="text-sm">
               Set dough weight directly
@@ -267,7 +267,7 @@ export function SizeControls({ sizing }: { sizing: SizingResult | null }) {
       ) : null}
 
       {sizing ? (
-        <div className="divide-y divide-border rounded-lg bg-muted/40 px-4 py-2">
+        <div className="surface-inset divide-y divide-hairline/30 px-4 py-2">
           <DerivedRow
             label={isRound ? "Area per pizza" : "Usable pan area"}
             value={formatArea(sizing.areaPerUnitSquareInches)}

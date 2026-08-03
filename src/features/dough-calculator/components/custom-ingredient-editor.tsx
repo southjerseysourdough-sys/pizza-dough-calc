@@ -87,7 +87,7 @@ export function CustomIngredientEditor({
             return (
               <li
                 key={ingredient.id}
-                className="flex flex-col gap-2 rounded-lg bg-muted/40 p-3 sm:flex-row sm:items-end sm:gap-3"
+                className="surface-instrument flex flex-col gap-2 p-3 sm:flex-row sm:items-end sm:gap-3"
               >
                 <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                   <Label

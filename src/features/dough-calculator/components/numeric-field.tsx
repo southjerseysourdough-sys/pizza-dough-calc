@@ -8,25 +8,28 @@ import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 
 /**
- * A labelled number input, optionally paired with a slider.
+ * A measurement instrument: a label, a value capsule, and an optional rail.
  *
- * The number input is always present and always shows the current value: the
- * slider is a convenience, never the only way to set a figure. Both write to
- * the same source value, so they cannot disagree.
+ * The capsule is a real editable input styled as an instrument readout — the
+ * precise value is always visible and always typeable. The rail is a
+ * convenience for coarse adjustment, never the only way to set a figure, and
+ * the two write to the same source value so they cannot disagree.
  */
 
 type NumericFieldProps = {
   label: string;
   value: number;
   onChange: (value: number) => void;
-  /** Rendered after the input, e.g. "%" or "g". */
+  /** Rendered inside the capsule, e.g. "%" or "in". */
   unit?: string;
-  /** Supplying all three turns on the paired slider. */
+  /** Supplying both turns on the paired rail. */
   min?: number;
   max?: number;
   step?: number;
   /** Explanatory text, linked to the input via aria-describedby. */
   hint?: string;
+  /** Shows the rail's end values, useful when the range is not obvious. */
+  showRange?: boolean;
   disabled?: boolean;
   className?: string;
 };
@@ -44,6 +47,7 @@ export function NumericField({
   max,
   step = 1,
   hint,
+  showRange = false,
   disabled,
   className,
 }: NumericFieldProps) {
@@ -63,14 +67,14 @@ export function NumericField({
   if (!Object.is(value, lastValue)) {
     setLastValue(value);
     // Only overwrite the text when the incoming value genuinely disagrees with
-    // what is typed, so an external change (slider, preset) wins but typing
+    // what is typed, so an external change (rail, preset) wins but typing
     // is never interrupted.
     if (!Object.is(Number(draft), value)) {
       setDraft(toDraft(value));
     }
   }
 
-  const showSlider =
+  const showRail =
     min !== undefined && max !== undefined && Number.isFinite(value);
 
   const handleInputChange = (next: string) => {
@@ -81,12 +85,26 @@ export function NumericField({
   };
 
   return (
-    <div className={cn("flex flex-col gap-2", className)}>
-      <div className="flex items-baseline justify-between gap-3">
-        <Label htmlFor={inputId} className="text-sm font-medium">
+    <div className={cn("flex flex-col gap-2.5", className)}>
+      <div className="flex items-center justify-between gap-3">
+        <Label
+          htmlFor={inputId}
+          className="text-sm leading-tight font-medium text-foreground/90"
+        >
           {label}
         </Label>
-        <div className="flex items-center gap-1.5">
+
+        {/*
+         * The value capsule. Focus-within moves the ring onto the whole
+         * capsule so it reads as one control rather than a bare box.
+         */}
+        <div
+          className={cn(
+            "surface-inset flex h-9 shrink-0 items-center gap-1 py-0 pr-2.5 pl-1",
+            "transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/40",
+            disabled && "opacity-50"
+          )}
+        >
           <Input
             id={inputId}
             type="number"
@@ -98,12 +116,17 @@ export function NumericField({
             disabled={disabled}
             aria-describedby={hint ? hintId : undefined}
             onChange={(event) => handleInputChange(event.target.value)}
-            className="tabular h-8 w-24 text-right"
+            className={cn(
+              "tabular h-8 w-[4.5rem] border-0 bg-transparent px-1.5 text-right text-[0.95rem] font-semibold",
+              "shadow-none focus-visible:border-0 focus-visible:ring-0",
+              // The browser's spinner arrows fight the instrument look.
+              "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            )}
           />
           {unit ? (
             <span
               aria-hidden="true"
-              className="w-8 shrink-0 text-sm text-muted-foreground"
+              className="shrink-0 text-xs font-medium tracking-wide text-muted-foreground"
             >
               {unit}
             </span>
@@ -111,24 +134,35 @@ export function NumericField({
         </div>
       </div>
 
-      {showSlider ? (
-        <Slider
-          value={value}
-          min={min}
-          max={max}
-          step={step}
-          disabled={disabled}
-          // The visible Label is bound to the number input, so the slider
-          // carries its own accessible name.
-          aria-label={`${label} slider`}
-          onValueChange={(next) => {
-            if (typeof next === "number") onChange(next);
-          }}
-        />
+      {showRail ? (
+        <div className="flex flex-col gap-1">
+          <Slider
+            value={value}
+            min={min}
+            max={max}
+            step={step}
+            disabled={disabled}
+            // The visible Label is bound to the number input, so the rail
+            // carries its own accessible name.
+            aria-label={`${label} slider`}
+            onValueChange={(next) => {
+              if (typeof next === "number") onChange(next);
+            }}
+          />
+          {showRange ? (
+            <div
+              aria-hidden="true"
+              className="tabular flex justify-between text-[0.65rem] text-muted-foreground/70"
+            >
+              <span>{min}</span>
+              <span>{max}</span>
+            </div>
+          ) : null}
+        </div>
       ) : null}
 
       {hint ? (
-        <p id={hintId} className="text-xs text-muted-foreground">
+        <p id={hintId} className="text-xs leading-snug text-muted-foreground">
           {hint}
         </p>
       ) : null}

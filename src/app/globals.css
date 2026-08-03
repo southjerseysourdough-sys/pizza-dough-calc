@@ -10,13 +10,17 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Palette notes
+ * THE DOUGH LAB — palette and surface notes
  *
- * The shadcn neutral base ships at zero chroma. Everything below keeps the
- * same token names and roles but carries a small amount of warm chroma around
- * hue 60-85, so surfaces read as flour, paper and carbon steel under oven
- * light rather than as cold grey. Components must use these tokens; no
- * component should carry a raw hex or oklch value.
+ * The palette runs on a warm axis (hue 55-90) drawn from carbon steel, oven
+ * light, flour and baked crust. Everything is a semantic token: no component
+ * may carry a raw hex or oklch value.
+ *
+ * The critical change from a flat "brown admin panel" is tonal LAYERING.
+ * Rather than one card colour repeated everywhere, there are five stacked
+ * elevations. In dark mode they climb from obsidian upward; in light mode the
+ * page sits *darker* than its cards, so a card reads as a lit surface resting
+ * on dusted stone rather than as white-on-white.
  */
 
 @theme inline {
@@ -63,6 +67,18 @@
   --color-surface-raised: var(--surface-raised);
   --color-grid-line: var(--grid-line);
 
+  /* Dough Lab material tokens */
+  --color-ember: var(--ember);
+  --color-ember-soft: var(--ember-soft);
+  --color-steel: var(--steel);
+  --color-flour: var(--flour);
+  --color-olive: var(--olive);
+  --color-stage: var(--stage);
+  --color-workbench: var(--workbench);
+  --color-instrument: var(--instrument);
+  --color-inset: var(--inset);
+  --color-hairline: var(--hairline);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -72,97 +88,139 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Light: a clean, flour-dusted bakery work surface. */
+/* Light: flour-dusted stone, warm paper and brushed aluminium. */
 :root {
-  --background: oklch(0.985 0.005 85);
-  --foreground: oklch(0.19 0.012 60);
-  --card: oklch(1 0.002 85);
-  --card-foreground: oklch(0.19 0.012 60);
-  --popover: oklch(1 0.002 85);
-  --popover-foreground: oklch(0.19 0.012 60);
-  /* Baked crust. */
-  --primary: oklch(0.47 0.105 55);
-  --primary-foreground: oklch(0.985 0.008 85);
-  --secondary: oklch(0.945 0.011 80);
-  --secondary-foreground: oklch(0.26 0.014 60);
-  --muted: oklch(0.955 0.009 82);
-  --muted-foreground: oklch(0.5 0.015 65);
-  --accent: oklch(0.93 0.018 75);
-  --accent-foreground: oklch(0.26 0.02 55);
-  --destructive: oklch(0.55 0.2 27);
-  --border: oklch(0.895 0.01 80);
-  --input: oklch(0.895 0.01 80);
-  --ring: oklch(0.55 0.1 60);
+  /* The page is deliberately a shade darker than the cards it holds. */
+  --background: oklch(0.955 0.009 84);
+  --foreground: oklch(0.19 0.014 58);
 
-  --chart-1: oklch(0.47 0.105 55);
-  --chart-2: oklch(0.6 0.09 70);
-  --chart-3: oklch(0.7 0.07 85);
-  --chart-4: oklch(0.78 0.05 90);
-  --chart-5: oklch(0.86 0.03 90);
+  --stage: oklch(0.978 0.008 86);
+  --workbench: oklch(0.988 0.005 88);
+  --instrument: oklch(1 0.002 90);
+  --inset: oklch(0.934 0.012 82);
+  --hairline: oklch(0.86 0.012 80);
+
+  --card: oklch(0.988 0.005 88);
+  --card-foreground: oklch(0.19 0.014 58);
+  --popover: oklch(0.994 0.004 88);
+  --popover-foreground: oklch(0.19 0.014 58);
+
+  /* Oven amber is the single accent identity. */
+  --ember: oklch(0.56 0.16 55);
+  --ember-soft: oklch(0.72 0.11 62);
+  --steel: oklch(0.62 0.021 235);
+  --flour: oklch(0.94 0.014 85);
+  --olive: oklch(0.52 0.055 110);
+
+  --primary: oklch(0.5 0.145 52);
+  --primary-foreground: oklch(0.985 0.008 85);
+  --secondary: oklch(0.94 0.012 82);
+  --secondary-foreground: oklch(0.26 0.016 58);
+  --muted: oklch(0.945 0.011 84);
+  --muted-foreground: oklch(0.475 0.018 66);
+  --accent: oklch(0.925 0.024 72);
+  --accent-foreground: oklch(0.26 0.024 55);
+  --destructive: oklch(0.52 0.2 27);
+  --border: oklch(0.885 0.011 80);
+  --input: oklch(0.885 0.011 80);
+  --ring: oklch(0.56 0.16 55);
+
+  --chart-1: oklch(0.56 0.16 55);
+  --chart-2: oklch(0.66 0.11 72);
+  --chart-3: oklch(0.74 0.075 88);
+  --chart-4: oklch(0.6 0.045 130);
+  --chart-5: oklch(0.62 0.03 235);
 
   --radius: 0.625rem;
 
   --sidebar: oklch(0.97 0.008 85);
-  --sidebar-foreground: oklch(0.19 0.012 60);
-  --sidebar-primary: oklch(0.47 0.105 55);
+  --sidebar-foreground: oklch(0.19 0.014 58);
+  --sidebar-primary: oklch(0.5 0.145 52);
   --sidebar-primary-foreground: oklch(0.985 0.008 85);
-  --sidebar-accent: oklch(0.93 0.018 75);
-  --sidebar-accent-foreground: oklch(0.26 0.02 55);
-  --sidebar-border: oklch(0.895 0.01 80);
-  --sidebar-ring: oklch(0.55 0.1 60);
+  --sidebar-accent: oklch(0.925 0.024 72);
+  --sidebar-accent-foreground: oklch(0.26 0.024 55);
+  --sidebar-border: oklch(0.885 0.011 80);
+  --sidebar-ring: oklch(0.56 0.16 55);
 
-  /* Product tokens. Warning is distinct from destructive: advisory, not an error. */
-  --warning: oklch(0.52 0.11 70);
-  --warning-foreground: oklch(0.28 0.05 65);
-  --warning-surface: oklch(0.95 0.035 85);
-  --crust: oklch(0.47 0.105 55);
-  --surface-raised: oklch(0.975 0.007 85);
-  --grid-line: oklch(0.895 0.01 80 / 55%);
+  /* Advisory, not alarming: warm amber rather than red. */
+  --warning: oklch(0.5 0.105 68);
+  --warning-foreground: oklch(0.3 0.05 65);
+  --warning-surface: oklch(0.955 0.038 84);
+  --crust: oklch(0.5 0.145 52);
+  --surface-raised: oklch(0.988 0.005 88);
+  --grid-line: oklch(0.86 0.012 80 / 50%);
+
+  /* Elevation. Warm-tinted rather than neutral black. */
+  --shadow-instrument: 0 1px 2px oklch(0.3 0.03 60 / 6%);
+  --shadow-workbench:
+    0 1px 2px oklch(0.3 0.03 60 / 5%), 0 8px 24px -12px oklch(0.3 0.03 60 / 12%);
+  --shadow-result:
+    0 2px 4px oklch(0.3 0.03 60 / 6%),
+    0 20px 48px -20px oklch(0.35 0.06 55 / 22%);
 }
 
 /* Dark: carbon steel under warm oven light. */
 .dark {
-  --background: oklch(0.16 0.008 60);
-  --foreground: oklch(0.94 0.008 85);
-  --card: oklch(0.205 0.01 60);
-  --card-foreground: oklch(0.94 0.008 85);
-  --popover: oklch(0.205 0.01 60);
-  --popover-foreground: oklch(0.94 0.008 85);
-  /* Oven light. */
-  --primary: oklch(0.75 0.12 68);
-  --primary-foreground: oklch(0.18 0.02 60);
-  --secondary: oklch(0.27 0.012 60);
-  --secondary-foreground: oklch(0.94 0.008 85);
-  --muted: oklch(0.26 0.011 60);
-  --muted-foreground: oklch(0.72 0.016 78);
-  --accent: oklch(0.3 0.022 65);
-  --accent-foreground: oklch(0.94 0.008 85);
-  --destructive: oklch(0.7 0.17 25);
-  --border: oklch(1 0 0 / 11%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.62 0.1 65);
+  --background: oklch(0.135 0.009 58);
+  --foreground: oklch(0.945 0.008 86);
 
-  --chart-1: oklch(0.75 0.12 68);
-  --chart-2: oklch(0.66 0.1 60);
-  --chart-3: oklch(0.56 0.08 55);
-  --chart-4: oklch(0.44 0.06 55);
-  --chart-5: oklch(0.34 0.04 55);
+  --stage: oklch(0.168 0.011 56);
+  --workbench: oklch(0.196 0.011 58);
+  --instrument: oklch(0.228 0.012 58);
+  --inset: oklch(0.152 0.01 58);
+  --hairline: oklch(0.34 0.014 60);
 
-  --sidebar: oklch(0.185 0.009 60);
-  --sidebar-foreground: oklch(0.94 0.008 85);
-  --sidebar-primary: oklch(0.75 0.12 68);
-  --sidebar-primary-foreground: oklch(0.18 0.02 60);
-  --sidebar-accent: oklch(0.3 0.022 65);
-  --sidebar-accent-foreground: oklch(0.94 0.008 85);
-  --sidebar-border: oklch(1 0 0 / 11%);
-  --sidebar-ring: oklch(0.62 0.1 65);
+  --card: oklch(0.196 0.011 58);
+  --card-foreground: oklch(0.945 0.008 86);
+  --popover: oklch(0.215 0.012 58);
+  --popover-foreground: oklch(0.945 0.008 86);
+
+  --ember: oklch(0.78 0.145 68);
+  --ember-soft: oklch(0.66 0.11 62);
+  --steel: oklch(0.68 0.028 235);
+  --flour: oklch(0.9 0.02 88);
+  --olive: oklch(0.66 0.06 112);
+
+  --primary: oklch(0.78 0.145 68);
+  --primary-foreground: oklch(0.17 0.022 58);
+  --secondary: oklch(0.27 0.013 58);
+  --secondary-foreground: oklch(0.945 0.008 86);
+  --muted: oklch(0.255 0.012 58);
+  --muted-foreground: oklch(0.735 0.018 78);
+  --accent: oklch(0.3 0.026 62);
+  --accent-foreground: oklch(0.945 0.008 86);
+  --destructive: oklch(0.68 0.17 25);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.72 0.12 65);
+
+  --chart-1: oklch(0.78 0.145 68);
+  --chart-2: oklch(0.68 0.11 60);
+  --chart-3: oklch(0.58 0.08 52);
+  --chart-4: oklch(0.62 0.06 125);
+  --chart-5: oklch(0.68 0.035 235);
+
+  --sidebar: oklch(0.168 0.011 56);
+  --sidebar-foreground: oklch(0.945 0.008 86);
+  --sidebar-primary: oklch(0.78 0.145 68);
+  --sidebar-primary-foreground: oklch(0.17 0.022 58);
+  --sidebar-accent: oklch(0.3 0.026 62);
+  --sidebar-accent-foreground: oklch(0.945 0.008 86);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.72 0.12 65);
 
   --warning: oklch(0.82 0.12 80);
   --warning-foreground: oklch(0.9 0.08 82);
-  --warning-surface: oklch(0.3 0.045 70);
-  --crust: oklch(0.75 0.12 68);
-  --surface-raised: oklch(0.225 0.011 60);
-  --grid-line: oklch(1 0 0 / 7%);
+  --warning-surface: oklch(0.27 0.04 68);
+  --crust: oklch(0.78 0.145 68);
+  --surface-raised: oklch(0.228 0.012 58);
+  --grid-line: oklch(1 0 0 / 6%);
+
+  --shadow-instrument: 0 1px 2px oklch(0 0 0 / 30%);
+  --shadow-workbench:
+    0 1px 2px oklch(0 0 0 / 28%), 0 10px 28px -14px oklch(0 0 0 / 55%);
+  --shadow-result:
+    0 2px 6px oklch(0 0 0 / 32%), 0 24px 56px -24px oklch(0.4 0.1 55 / 30%);
 }
 
 @layer base {
@@ -182,6 +240,135 @@
    */
   .tabular {
     font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+}
+
+@layer components {
+  /*
+   * SURFACE ROLES
+   *
+   * Six distinct surfaces rather than one card style repeated. Each differs in
+   * more than colour: radius, border treatment and elevation all vary, so the
+   * hierarchy survives greyscale and does not depend on hue alone.
+   */
+
+  /* Level one. The live dough stage: darkest/deepest, largest radius. */
+  .surface-stage {
+    background:
+      radial-gradient(
+        120% 100% at 78% 0%,
+        color-mix(in oklch, var(--ember) 12%, transparent) 0%,
+        transparent 58%
+      ),
+      linear-gradient(
+        168deg,
+        var(--stage) 0%,
+        color-mix(in oklch, var(--stage) 92%, var(--background)) 100%
+      );
+    border: 1px solid color-mix(in oklch, var(--hairline) 70%, transparent);
+    border-radius: 1.5rem;
+    box-shadow: var(--shadow-workbench);
+  }
+
+  /* Level two. Control groups: mid elevation, medium radius. */
+  .surface-workbench {
+    background: var(--workbench);
+    border: 1px solid color-mix(in oklch, var(--hairline) 55%, transparent);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-workbench);
+  }
+
+  /* A single control cluster inside a workbench panel. */
+  .surface-instrument {
+    background: var(--instrument);
+    border: 1px solid color-mix(in oklch, var(--hairline) 40%, transparent);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-instrument);
+  }
+
+  /* Level one result. The strongest surface on the page. */
+  .surface-result {
+    background:
+      radial-gradient(
+        90% 70% at 50% -10%,
+        color-mix(in oklch, var(--ember) 14%, transparent) 0%,
+        transparent 65%
+      ),
+      var(--workbench);
+    border: 1px solid color-mix(in oklch, var(--ember) 26%, var(--hairline));
+    border-radius: 1.25rem;
+    box-shadow: var(--shadow-result);
+  }
+
+  /* Recessed data wells. Reads as cut into the surface above it. */
+  .surface-inset {
+    background: var(--inset);
+    border: 1px solid color-mix(in oklch, var(--hairline) 35%, transparent);
+    border-radius: 0.625rem;
+    box-shadow: inset 0 1px 2px oklch(0 0 0 / 6%);
+  }
+
+  .surface-warning {
+    background: color-mix(in oklch, var(--warning-surface) 70%, transparent);
+    border: 1px solid color-mix(in oklch, var(--warning) 28%, transparent);
+    border-radius: 0.75rem;
+  }
+
+  /*
+   * A one-pixel light catch along the top edge, the way light lands on a
+   * bevelled steel panel. Applied sparingly to the stage and result only.
+   */
+  .edge-highlight {
+    position: relative;
+  }
+  .edge-highlight::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding-top: 1px;
+    background: linear-gradient(
+      to bottom,
+      color-mix(in oklch, var(--flour) 45%, transparent),
+      transparent 42%
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /*
+   * Page atmosphere. A warm key light from the upper right and a cool steel
+   * reflection from the lower left, both very low contrast so text never
+   * competes with them.
+   */
+  .page-atmosphere {
+    background-image:
+      radial-gradient(
+        70% 45% at 82% -5%,
+        color-mix(in oklch, var(--ember) 13%, transparent) 0%,
+        transparent 62%
+      ),
+      radial-gradient(
+        60% 50% at 5% 105%,
+        color-mix(in oklch, var(--steel) 9%, transparent) 0%,
+        transparent 60%
+      );
+  }
+
+  /*
+   * Faint measurement grid, like a cutting mat on the bench. Sits under the
+   * workbench column at very low opacity.
+   */
+  .bench-grid {
+    background-image:
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size: 28px 28px;
   }
 }
 

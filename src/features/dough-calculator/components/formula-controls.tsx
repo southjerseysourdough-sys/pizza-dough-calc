@@ -201,7 +201,7 @@ export function FormulaControls() {
       ) : null}
 
       {showAdvanced ? (
-        <div className="grid gap-4 rounded-lg bg-muted/40 p-4 sm:grid-cols-2">
+        <div className="surface-instrument grid gap-4 p-4 sm:grid-cols-2">
           <NumericField
             label="Sugar"
             unit="%"

@@ -1,7 +1,7 @@
 import { screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { recipeRegion } from "@/test/calculator-queries";
+import { openLedger, recipeRegion } from "@/test/calculator-queries";
 import {
   renderWithProviders,
   resetCalculatorStore,
@@ -193,7 +193,9 @@ describe("blend weights", () => {
     await user.clear(shares[1]);
     await user.type(shares[1], "20");
 
-    // 334 g of added flour splits 267 / 67.
+    // The per-flour split lives in the ledger alongside the other exact
+    // figures, so open it. 334 g of added flour splits 267 / 67.
+    await openLedger(user);
     expect(recipeRegion()).toHaveTextContent(/semolina/i);
     expect(recipeRegion()).toHaveTextContent("267 g");
     expect(recipeRegion()).toHaveTextContent("67 g");
