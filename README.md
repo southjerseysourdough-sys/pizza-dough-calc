@@ -2,7 +2,7 @@
 
 A precision workspace for planning and scaling pizza dough by baking area,
 with round-steel and sheet-pan modes, baker&rsquo;s percentages, sourdough,
-commercial yeast, and hybrid formulas.
+instant dry yeast, and optional hybrid formulas.
 
 Recipes can be named and saved locally, reopened, renamed, duplicated, shared
 by URL, copied as readable text, moved as versioned JSON, printed, or exported
@@ -62,6 +62,8 @@ The app runs at http://localhost:3000.
 
 - Draft inputs and saved recipes use browser `localStorage` with versioned,
   Zod-validated document envelopes.
+- Readability preferences are local too: Atkinson Hyperlegible Next, IBM Plex
+  Sans, and Geist are available at standard, comfortable, and large sizes.
 - Recipe documents are currently schema version 2. Version 1 saves, JSON files,
   and shared URLs migrate through the same boundary without inventing a
   fermentation plan or changing formula inputs.

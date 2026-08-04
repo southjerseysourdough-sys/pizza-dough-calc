@@ -134,7 +134,10 @@ describe("launch domain", () => {
   });
 
   it("ships the complete concise help and privacy corpus", () => {
-    expect(HELP_TOPICS).toHaveLength(15);
+    expect(HELP_TOPICS).toHaveLength(16);
+    expect(findHelpTopic("readability")?.body.join(" ")).toContain(
+      "Atkinson Hyperlegible Next"
+    );
     expect(findHelpTopic("fermentation")?.body.join(" ")).toContain(
       "Backward planning"
     );

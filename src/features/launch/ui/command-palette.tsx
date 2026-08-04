@@ -196,6 +196,13 @@ export function CommandPalette({
               if (item) void execute(item.id);
             }}
             itemToStringLabel={(item) => item.label}
+            filter={(item, query) => {
+              const search = query.trim().toLocaleLowerCase();
+              if (!search) return true;
+              return `${item.label} ${item.keywords}`
+                .toLocaleLowerCase()
+                .includes(search);
+            }}
           >
             <div className="flex items-center gap-2 border-b-[0.5px] border-graphite px-4">
               <SearchIcon

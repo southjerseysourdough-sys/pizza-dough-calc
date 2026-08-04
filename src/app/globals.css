@@ -7,7 +7,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-app-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
 
@@ -79,6 +79,7 @@
 }
 
 :root {
+  --font-app-sans: var(--font-atkinson), Arial, sans-serif;
   --void: #f2f3f5;
   --carbon: #ffffff;
   --obsidian: #f7f8f9;
@@ -133,6 +134,47 @@
 
   --radius: 6px;
   --border-glow-hsl: 65 88 46;
+}
+
+html[data-reading-font="geist"] {
+  --font-app-sans: var(--font-geist-sans), Arial, sans-serif;
+}
+
+html[data-reading-font="atkinson"] {
+  --font-app-sans: var(--font-atkinson), Arial, sans-serif;
+}
+
+html[data-reading-font="plex"] {
+  --font-app-sans: var(--font-ibm-plex), Arial, sans-serif;
+}
+
+html[data-text-size="standard"] {
+  font-size: 16px;
+}
+
+html[data-text-size="comfortable"] {
+  font-size: 18px;
+}
+
+html[data-text-size="large"] {
+  font-size: 20px;
+}
+
+/* The instrument labels predate the scalable type system and use explicit
+   pixel sizes. Keep them legible when the reader increases the global size. */
+html[data-text-size="comfortable"] .text-\[9px\],
+html[data-text-size="large"] .text-\[9px\] {
+  font-size: 0.6875rem;
+}
+
+html[data-text-size="comfortable"] .text-\[10px\],
+html[data-text-size="large"] .text-\[10px\] {
+  font-size: 0.75rem;
+}
+
+html[data-text-size="comfortable"] .text-\[11px\],
+html[data-text-size="large"] .text-\[11px\] {
+  font-size: 0.8125rem;
 }
 
 .dark {

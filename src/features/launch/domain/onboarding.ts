@@ -38,7 +38,7 @@ export function resetOnboarding(storage?: Storage): boolean {
 export const ONBOARDING_STEPS = [
   {
     title: "Choose your format",
-    detail: "Start with round pizza on steel or a Sicilian-style sheet pan.",
+    detail: "Start with a round pizza or any pan pizza.",
     target: "format",
   },
   {
@@ -47,8 +47,9 @@ export const ONBOARDING_STEPS = [
     target: "geometry",
   },
   {
-    title: "Tune the formula",
-    detail: "Hydration, flour, salt, yeast, and starter remain editable.",
+    title: "Choose your dough",
+    detail:
+      "Set hydration and choose instant dry yeast or starter. More controls are there when you need them.",
     target: "formula",
   },
   {

@@ -95,9 +95,7 @@ describe("SVG Dough Field", () => {
       container.querySelector("[data-dough-field='round']")
     ).not.toBeNull();
 
-    await user.click(
-      screen.getByRole("radio", { name: /sicilian or sheet pan/i })
-    );
+    await user.click(screen.getByRole("radio", { name: /pan pizza/i }));
 
     expect(
       container.querySelector("[data-dough-field='rectangular']")
@@ -203,8 +201,8 @@ describe("format cards", () => {
   it("are a keyboard reachable radio group", async () => {
     const { user } = renderWithProviders(<DoughCalculator />);
 
-    const round = screen.getByRole("radio", { name: /round on steel/i });
-    const sheet = screen.getByRole("radio", { name: /sicilian or sheet pan/i });
+    const round = screen.getByRole("radio", { name: /round pizza/i });
+    const sheet = screen.getByRole("radio", { name: /pan pizza/i });
 
     expect(round).toBeChecked();
 

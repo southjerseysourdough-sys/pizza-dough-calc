@@ -2,6 +2,7 @@ import { siteConfig } from "@/config/site";
 
 import { ThemeToggle } from "./theme-toggle";
 import { AppMenuButton } from "@/features/launch/ui/app-menu-button";
+import { ReadabilitySettings } from "@/features/launch/ui/readability-settings";
 
 export function SiteHeader() {
   return (
@@ -30,6 +31,7 @@ export function SiteHeader() {
             <span className="size-1.5 rounded-full bg-success" />
             Dough Lab / Live
           </span>
+          <ReadabilitySettings />
           <ThemeToggle />
           <AppMenuButton />
         </div>

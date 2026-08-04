@@ -11,7 +11,12 @@ import { setMediaQuery } from "@/test/setup";
 
 import { DoughCalculator } from "../components/dough-calculator";
 
-beforeEach(resetCalculatorStore);
+beforeEach(() => {
+  resetCalculatorStore();
+  localStorage.removeItem("pdc:readability");
+  delete document.documentElement.dataset.readingFont;
+  delete document.documentElement.dataset.textSize;
+});
 
 describe("theme toggle", () => {
   it("offers system, light and dark", () => {
@@ -31,6 +36,7 @@ describe("theme toggle", () => {
   it("is reachable and operable from the keyboard", async () => {
     const { user } = renderWithProviders(<SiteHeader />);
 
+    await user.tab();
     await user.tab();
 
     // Tab lands inside the radio group without needing a pointer.
@@ -65,6 +71,37 @@ describe("theme toggle", () => {
   });
 });
 
+describe("reading settings", () => {
+  it("offers distinct fonts and persistent text sizes", async () => {
+    const { user } = renderWithProviders(<SiteHeader />);
+
+    await user.click(screen.getByRole("button", { name: /reading settings/i }));
+
+    expect(
+      screen.getByRole("radio", { name: /atkinson/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("radio", { name: /ibm plex/i })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /geist/i })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("radio", { name: /ibm plex/i }));
+    await user.click(screen.getByRole("radio", { name: /large/i }));
+
+    expect(document.documentElement.dataset.readingFont).toBe("plex");
+    expect(document.documentElement.dataset.textSize).toBe("large");
+    expect(localStorage.getItem("pdc:readability")).toContain('"plex"');
+  });
+
+  it("defaults to the readability-first combination", async () => {
+    const { user } = renderWithProviders(<SiteHeader />);
+    await user.click(screen.getByRole("button", { name: /reading settings/i }));
+
+    expect(screen.getByRole("radio", { name: /atkinson/i })).toBeChecked();
+    expect(screen.getByRole("radio", { name: /comfortable/i })).toBeChecked();
+  });
+});
+
 describe("reduced motion", () => {
   it("still renders the whole calculator", () => {
     setMediaQuery("(prefers-reduced-motion: reduce)");
@@ -74,7 +111,7 @@ describe("reduced motion", () => {
     expect(recipeRegion()).toBeInTheDocument();
     expect(recipeRegion()).toHaveTextContent("563 g");
     expect(
-      screen.getByRole("radio", { name: /round on steel/i })
+      screen.getByRole("radio", { name: /round pizza/i })
     ).toBeInTheDocument();
     expect(
       screen.getByRole("spinbutton", { name: /pizza diameter/i })

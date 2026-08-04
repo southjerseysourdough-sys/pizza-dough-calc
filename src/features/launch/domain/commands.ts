@@ -39,16 +39,16 @@ const needsRecipe = (context: CommandContext) => !context.hasValidRecipe;
 export const COMMANDS: readonly CommandDescriptor[] = [
   {
     id: "format-round",
-    label: "Switch to Round on Steel",
+    label: "Switch to Round Pizza",
     group: "Calculator",
     keywords: "shape circle pizza",
     disabled: enabled,
   },
   {
     id: "format-sheet",
-    label: "Switch to Sicilian or Sheet Pan",
+    label: "Switch to Pan Pizza",
     group: "Calculator",
-    keywords: "shape rectangle pan",
+    keywords: "shape rectangle sheet pan sicilian grandma",
     disabled: enabled,
   },
   {
@@ -137,9 +137,9 @@ export const COMMANDS: readonly CommandDescriptor[] = [
   },
   {
     id: "toggle-advanced",
-    label: "Toggle Advanced Mode",
+    label: "Toggle More Controls",
     group: "Calculator",
-    keywords: "flour custom precision",
+    keywords: "advanced expert flour custom precision",
     disabled: enabled,
   },
   {

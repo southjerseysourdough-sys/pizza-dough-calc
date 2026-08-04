@@ -19,7 +19,7 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     title: "Quick Start",
     summary: "From size to dough weights.",
     body: [
-      "Choose round or sheet pan, enter the baking dimensions and quantity, then tune the formula. Every displayed ingredient weight updates immediately.",
+      "Choose round or pan pizza, enter the size and quantity, then choose instant dry yeast or sourdough starter. Every displayed ingredient weight updates immediately.",
     ],
   },
   {
@@ -41,9 +41,17 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
   {
     id: "leavening",
     title: "Yeast versus sourdough",
-    summary: "Choose commercial yeast, starter, or both.",
+    summary: "Choose instant dry yeast or starter.",
     body: [
-      "Commercial yeast and sourdough starter are separate formula inputs. Hybrid formulas use both without counting starter flour or water twice.",
+      "The beginner path standardizes commercial formulas on instant dry yeast. Sourdough uses ripe starter. Advanced bakers can reveal the hybrid option under More controls without counting starter flour or water twice.",
+    ],
+  },
+  {
+    id: "readability",
+    title: "Font and text size",
+    summary: "Make every screen easier to read.",
+    body: [
+      "Open Text in the header to choose Atkinson Hyperlegible Next, IBM Plex Sans, or Geist and select standard, comfortable, or large type. The choice stays saved on this device.",
     ],
   },
   {

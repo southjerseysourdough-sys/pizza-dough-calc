@@ -29,16 +29,29 @@ function chooseLeavening(method: "commercial-yeast" | "sourdough" | "hybrid") {
 beforeEach(resetCalculatorStore);
 
 describe("commercial yeast mode", () => {
-  it("shows yeast controls", () => {
+  it("uses one clearly named yeast standard", () => {
     renderWithProviders(<DoughCalculator />);
 
-    expect(numberInput(/^yeast$/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/recipe uses instant dry yeast/i)
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText(/yeast type/i)).toBeNull();
+  });
+
+  it("keeps percentage tuning in more controls", () => {
+    renderWithProviders(<DoughCalculator />);
+
+    expect(
+      screen.queryByRole("spinbutton", { name: /instant dry yeast/i })
+    ).toBeNull();
   });
 
   it("hides starter-only controls", () => {
     renderWithProviders(<DoughCalculator />);
 
-    expect(screen.queryByRole("spinbutton", { name: /^starter$/i })).toBeNull();
+    expect(
+      screen.queryByRole("spinbutton", { name: /starter amount/i })
+    ).toBeNull();
     expect(
       screen.queryByRole("spinbutton", { name: /starter hydration/i })
     ).toBeNull();
@@ -56,14 +69,16 @@ describe("sourdough mode", () => {
     chooseLeavening("sourdough");
     renderWithProviders(<DoughCalculator />);
 
-    expect(numberInput(/^starter$/i)).toBeInTheDocument();
+    expect(numberInput(/starter amount/i)).toBeInTheDocument();
   });
 
   it("hides the commercial yeast control", () => {
     chooseLeavening("sourdough");
     renderWithProviders(<DoughCalculator />);
 
-    expect(screen.queryByRole("spinbutton", { name: /^yeast$/i })).toBeNull();
+    expect(
+      screen.queryByRole("spinbutton", { name: /instant dry yeast/i })
+    ).toBeNull();
   });
 
   it("names the starter in the composition without opening anything", () => {
@@ -104,10 +119,11 @@ describe("sourdough mode", () => {
 describe("hybrid mode", () => {
   it("shows both starter and yeast controls", () => {
     chooseLeavening("hybrid");
+    useCalculatorStore.getState().setShowAdvanced(true);
     renderWithProviders(<DoughCalculator />);
 
-    expect(numberInput(/^starter$/i)).toBeInTheDocument();
-    expect(numberInput(/^yeast$/i)).toBeInTheDocument();
+    expect(numberInput(/starter amount/i)).toBeInTheDocument();
+    expect(numberInput(/instant dry yeast/i)).toBeInTheDocument();
   });
 
   it("includes both leaveners in the recipe", async () => {
@@ -116,7 +132,7 @@ describe("hybrid mode", () => {
 
     // Both appear in the composition at a glance.
     expect(recipeRegion()).toHaveTextContent(/sourdough starter/i);
-    expect(recipeRegion()).toHaveTextContent(/commercial yeast/i);
+    expect(recipeRegion()).toHaveTextContent(/instant dry yeast/i);
 
     await openLedger(user);
     expect(recipeRegion()).toHaveTextContent(/total starter/i);
@@ -127,17 +143,15 @@ describe("pan measurement confirmation", () => {
   async function goToSheetPan(
     user: ReturnType<typeof renderWithProviders>["user"]
   ) {
-    await user.click(
-      screen.getByRole("radio", { name: /sicilian or sheet pan/i })
-    );
+    await user.click(screen.getByRole("radio", { name: /pan pizza/i }));
   }
 
-  it("labels dimensions as nominal until measurement is confirmed", async () => {
+  it("asks directly for the flat inside dimensions", async () => {
     const { user } = renderWithProviders(<DoughCalculator />);
     await goToSheetPan(user);
 
-    expect(numberInput(/interior length \(nominal\)/i)).toBeInTheDocument();
-    expect(numberInput(/interior width \(nominal\)/i)).toBeInTheDocument();
+    expect(numberInput(/flat inside length/i)).toBeInTheDocument();
+    expect(numberInput(/flat inside width/i)).toBeInTheDocument();
   });
 
   it("shows the estimated-dimensions reminder", async () => {
@@ -150,49 +164,27 @@ describe("pan measurement confirmation", () => {
     ).toBeInTheDocument();
   });
 
-  it("relabels the dimensions as measured once confirmed", async () => {
+  it("treats editing a dimension as measurement confirmation", async () => {
     const { user } = renderWithProviders(<DoughCalculator />);
     await goToSheetPan(user);
 
-    await user.click(
-      screen.getByRole("switch", {
-        name: /i measured the flat inside baking surface/i,
-      })
-    );
-
-    expect(numberInput(/measured interior length/i)).toBeInTheDocument();
-    expect(numberInput(/measured interior width/i)).toBeInTheDocument();
-  });
-
-  it("drops the estimated reminder once confirmed", async () => {
-    const { user } = renderWithProviders(<DoughCalculator />);
-    await goToSheetPan(user);
-
-    await user.click(
-      screen.getByRole("switch", {
-        name: /i measured the flat inside baking surface/i,
-      })
-    );
-
-    expect(screen.queryByText(/estimated dimensions/i)).toBeNull();
-  });
-
-  it("preserves the entered dimensions when confirming", async () => {
-    const { user } = renderWithProviders(<DoughCalculator />);
-    await goToSheetPan(user);
-
-    const length = numberInput(/interior length/i);
+    const length = numberInput(/flat inside length/i);
     await user.clear(length);
     await user.type(length, "17.25");
 
-    await user.click(
-      screen.getByRole("switch", {
-        name: /i measured the flat inside baking surface/i,
-      })
-    );
+    expect(length).toHaveValue(17.25);
+    expect(useCalculatorStore.getState().panInteriorMeasured).toBe(true);
+  });
 
-    // Confirming is a statement about the numbers, not a reason to replace them.
-    expect(numberInput(/measured interior length/i)).toHaveValue(17.25);
+  it("drops the estimated reminder after a dimension is edited", async () => {
+    const { user } = renderWithProviders(<DoughCalculator />);
+    await goToSheetPan(user);
+
+    const width = numberInput(/flat inside width/i);
+    await user.clear(width);
+    await user.type(width, "12.5");
+
+    expect(screen.queryByText(/estimated dimensions/i)).toBeNull();
   });
 
   it("keeps calculating while dimensions are only estimated", async () => {
@@ -209,9 +201,7 @@ describe("sheet pan dough loading advisories", () => {
     // Advanced holds the dough loading field, so open it before rendering.
     useCalculatorStore.getState().setShowAdvanced(true);
     const { user } = renderWithProviders(<DoughCalculator />);
-    await user.click(
-      screen.getByRole("radio", { name: /sicilian or sheet pan/i })
-    );
+    await user.click(screen.getByRole("radio", { name: /pan pizza/i }));
 
     const loading = numberInput(/dough loading/i);
     await user.clear(loading);

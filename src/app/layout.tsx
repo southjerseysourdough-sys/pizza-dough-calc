@@ -1,5 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import {
+  Atkinson_Hyperlegible_Next,
+  Geist,
+  Geist_Mono,
+  IBM_Plex_Sans,
+} from "next/font/google";
 
 import { Providers } from "@/components/providers";
 import { siteConfig } from "@/config/site";
@@ -8,7 +13,7 @@ import "./globals.css";
 
 // Names must match the custom properties consumed by @theme in globals.css.
 const geistSans = Geist({
-  variable: "--font-sans",
+  variable: "--font-geist-sans",
   subsets: ["latin"],
 });
 
@@ -16,6 +21,32 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
+const atkinson = Atkinson_Hyperlegible_Next({
+  variable: "--font-atkinson",
+  subsets: ["latin"],
+  weight: "variable",
+  adjustFontFallback: false,
+});
+
+const ibmPlex = IBM_Plex_Sans({
+  variable: "--font-ibm-plex",
+  subsets: ["latin"],
+  weight: "variable",
+});
+
+const readabilityInitScript = `
+  try {
+    const saved = JSON.parse(localStorage.getItem("pdc:readability") || "{}");
+    const font = ["geist", "atkinson", "plex"].includes(saved.font) ? saved.font : "atkinson";
+    const size = ["standard", "comfortable", "large"].includes(saved.size) ? saved.size : "comfortable";
+    document.documentElement.dataset.readingFont = font;
+    document.documentElement.dataset.textSize = size;
+  } catch (_) {
+    document.documentElement.dataset.readingFont = "atkinson";
+    document.documentElement.dataset.textSize = "comfortable";
+  }
+`;
 
 /**
  * Open Graph and Twitter images are supplied by the `opengraph-image` file
@@ -90,8 +121,11 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${atkinson.variable} ${ibmPlex.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: readabilityInitScript }} />
+      </head>
       <body className="flex min-h-full flex-col">
         <Providers>{children}</Providers>
       </body>

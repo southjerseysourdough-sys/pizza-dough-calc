@@ -12,7 +12,7 @@ import {
 import { PAN_PROFILES, STEEL_PROFILES } from "../presets/equipment";
 import { findPreset } from "../presets/formulas";
 import { useCalculatorStore } from "../store/calculator-store";
-import { formatDoughLoading, formatPercentage } from "../utils/format";
+import { formatPercentage, formatTotalWeight } from "../utils/format";
 import { createRecipeDraftDocument } from "../utils/recipe-draft";
 import { useRecipeLibraryStore } from "../store/recipe-library-store";
 import { CustomIngredientEditor } from "./custom-ingredient-editor";
@@ -170,7 +170,7 @@ export function DoughCalculator() {
 
       <section
         aria-label="Current recipe command strip"
-        className="surface-workbench grid grid-cols-2 overflow-hidden sm:grid-cols-4 lg:grid-cols-9"
+        className="surface-workbench grid grid-cols-2 overflow-hidden sm:grid-cols-4 lg:grid-cols-8"
       >
         <CommandValue
           label="Profile"
@@ -178,17 +178,17 @@ export function DoughCalculator() {
           className="col-span-2 border-l-0"
         />
         <CommandValue label="Shape" value={isRound ? "Round" : "Sheet pan"} />
-        <CommandValue label="Surface" value={equipmentName} />
+        <CommandValue
+          label="Dough each"
+          value={
+            result
+              ? formatTotalWeight(result.sizing.doughWeightPerUnitGrams)
+              : "—"
+          }
+        />
         <CommandValue
           label="Hydration"
           value={formatPercentage(values.hydrationPercent / 100)}
-        />
-        <CommandValue
-          label="Loading"
-          value={formatDoughLoading(
-            result?.sizing.effectiveDoughLoadingGramsPerSquareInch ??
-              values.doughLoadingGramsPerSquareInch
-          )}
         />
         <CommandValue label="Quantity" value={`× ${values.quantity}`} />
         <button
@@ -214,7 +214,7 @@ export function DoughCalculator() {
         <label className="flex min-w-0 cursor-pointer items-center justify-between gap-2 border-l-[0.5px] border-graphite px-3 py-2.5">
           <span className="flex min-w-0 flex-col gap-0.5">
             <span className="font-mono text-[9px] tracking-[0.08em] text-muted-foreground uppercase">
-              Advanced
+              More controls
             </span>
             <span className="text-xs text-secondary-foreground">
               {showAdvanced ? "On" : "Off"}
@@ -235,43 +235,14 @@ export function DoughCalculator() {
       <div className="grid gap-4 lg:grid-cols-12">
         <div className="order-2 flex flex-col gap-4 lg:order-1 lg:col-span-7 xl:col-span-8">
           <div className="surface-workbench overflow-hidden">
-            <div data-onboarding-target="format">
-              <Bench eyebrow="01 / Profile" title="Formula starting point">
-                <div className="flex flex-col gap-3">
-                  <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                    {preset?.description}{" "}
-                    <span className="text-secondary-foreground">
-                      Every value below remains editable.
-                    </span>
-                  </p>
-                  <div className="grid grid-cols-3 gap-px overflow-hidden rounded-md border-[0.5px] border-graphite bg-graphite">
-                    <ProfileStat
-                      label="Hydration"
-                      value={formatPercentage(values.hydrationPercent / 100)}
-                    />
-                    <ProfileStat
-                      label="Salt"
-                      value={formatPercentage(values.saltPercent / 100)}
-                    />
-                    <ProfileStat
-                      label="Loading"
-                      value={formatDoughLoading(
-                        values.doughLoadingGramsPerSquareInch
-                      )}
-                    />
-                  </div>
-                </div>
-              </Bench>
-            </div>
-
             <div data-onboarding-target="geometry">
-              <Bench eyebrow="02 / Geometry" title="Size and equipment">
+              <Bench eyebrow="01 / Size" title="How much pizza are you making?">
                 <SizeControls sizing={result?.sizing ?? null} />
               </Bench>
             </div>
 
             <div data-onboarding-target="formula">
-              <Bench eyebrow="03 / Formula" title="Dough composition">
+              <Bench eyebrow="02 / Dough" title="Choose your dough">
                 <FormulaControls />
               </Bench>
             </div>
@@ -295,7 +266,7 @@ export function DoughCalculator() {
                   </div>
                 </div>
                 <span className="hidden rounded-sm border-[0.5px] border-graphite px-2 py-1 font-mono text-[9px] text-muted-foreground sm:block">
-                  SIZING · FLOUR · LEAVENING · ENRICHMENT · PAN
+                  FLOUR · EXTRAS
                 </span>
               </div>
 
@@ -306,26 +277,11 @@ export function DoughCalculator() {
                 <DetailBlock title="Custom ingredients" code="FORMULA.06">
                   <CustomIngredientEditor result={result} />
                 </DetailBlock>
-                <button
-                  type="button"
-                  className="col-span-full flex min-h-11 items-center justify-center gap-2 rounded-md border-[0.5px] border-graphite bg-inset px-3 text-sm text-secondary-foreground hover:text-foreground"
-                  onClick={() => {
-                    setFermentationWorkspaceOpen(true);
-                    requestAnimationFrame(() =>
-                      document
-                        .querySelector("[data-fermentation-planner]")
-                        ?.scrollIntoView({ block: "start" })
-                    );
-                  }}
-                >
-                  <CalendarClockIcon className="size-4 text-acid-lime" />
-                  Open fermentation planner
-                </button>
               </div>
             </div>
           ) : null}
 
-          {preset && preset.assumptions.length > 0 ? (
+          {showAdvanced && preset && preset.assumptions.length > 0 ? (
             <section className="border-l-[0.5px] border-graphite px-4 py-2">
               <h2 className="mb-2 font-mono text-[9px] tracking-[0.1em] text-muted-foreground uppercase">
                 Profile assumptions
@@ -370,17 +326,6 @@ export function DoughCalculator() {
           </div>
         </aside>
       </div>
-    </div>
-  );
-}
-
-function ProfileStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex flex-col gap-0.5 bg-inset px-3 py-2.5">
-      <span className="font-mono text-[9px] tracking-[0.08em] text-muted-foreground uppercase">
-        {label}
-      </span>
-      <span className="tabular text-xs text-foreground">{value}</span>
     </div>
   );
 }

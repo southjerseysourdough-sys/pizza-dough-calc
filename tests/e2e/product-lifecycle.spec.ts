@@ -143,12 +143,12 @@ test("maps the pizza frames forward and backward with format selection", async (
   const sequence = field.locator("[data-pizza-sequence]");
   await expect(sequence).toHaveAttribute("data-pizza-frame", "0");
 
-  await page.getByText("Sicilian or sheet pan", { exact: true }).click();
+  await page.getByText("Pan pizza", { exact: true }).click();
   await expect(field).toHaveAttribute("data-dough-field", "rectangular");
   await expect(sequence).toHaveAttribute("data-pizza-frame", "29");
   await expect(field).toContainText("Pizza Preview / Pan");
 
-  await page.getByText("Round on steel", { exact: true }).click();
+  await page.getByText("Round pizza", { exact: true }).click();
   await expect(sequence).toHaveAttribute("data-pizza-frame", "0");
 });
 

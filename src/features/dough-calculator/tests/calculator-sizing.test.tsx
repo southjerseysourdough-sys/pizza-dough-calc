@@ -26,15 +26,13 @@ describe("format switching", () => {
 
     expect(numberInput(/pizza diameter/i)).toBeInTheDocument();
 
-    await user.click(
-      screen.getByRole("radio", { name: /sicilian or sheet pan/i })
-    );
+    await user.click(screen.getByRole("radio", { name: /pan pizza/i }));
 
     expect(
       screen.queryByRole("spinbutton", { name: /pizza diameter/i })
     ).toBeNull();
-    expect(numberInput(/interior length/i)).toBeInTheDocument();
-    expect(numberInput(/interior width/i)).toBeInTheDocument();
+    expect(numberInput(/flat inside length/i)).toBeInTheDocument();
+    expect(numberInput(/flat inside width/i)).toBeInTheDocument();
   });
 
   it("switches the recipe from counting pizzas to counting pans", async () => {
@@ -42,9 +40,7 @@ describe("format switching", () => {
 
     expect(recipeRegion()).toHaveTextContent(/1 pizza/i);
 
-    await user.click(
-      screen.getByRole("radio", { name: /sicilian or sheet pan/i })
-    );
+    await user.click(screen.getByRole("radio", { name: /pan pizza/i }));
 
     expect(recipeRegion()).toHaveTextContent(/1 pan/i);
   });
@@ -52,10 +48,8 @@ describe("format switching", () => {
   it("returns to round controls", async () => {
     const { user } = renderWithProviders(<DoughCalculator />);
 
-    await user.click(
-      screen.getByRole("radio", { name: /sicilian or sheet pan/i })
-    );
-    await user.click(screen.getByRole("radio", { name: /round on steel/i }));
+    await user.click(screen.getByRole("radio", { name: /pan pizza/i }));
+    await user.click(screen.getByRole("radio", { name: /round pizza/i }));
 
     expect(numberInput(/pizza diameter/i)).toBeInTheDocument();
   });

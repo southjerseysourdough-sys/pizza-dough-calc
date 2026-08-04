@@ -135,6 +135,20 @@ export function buildIngredientList(params: {
     params;
   const fat = effectiveFatPercentage(input);
   const yeast = commercialYeastPercentage(input.leavening);
+  const yeastLabel =
+    input.leavening.method === "sourdough"
+      ? "Instant dry yeast"
+      : {
+          "instant-dry": "Instant dry yeast",
+          "active-dry": "Active dry yeast",
+          fresh: "Fresh yeast",
+        }[input.leavening.yeastType];
+  const fatLabel = {
+    none: "Fat",
+    "olive-oil": "Olive oil",
+    "neutral-oil": "Neutral oil",
+    tallow: "Tallow",
+  }[input.fatType];
 
   const ingredients: IngredientResult[] = [
     {
@@ -173,7 +187,7 @@ export function buildIngredientList(params: {
   if (yeast > 0) {
     ingredients.push({
       id: "commercial-yeast",
-      label: "Commercial yeast",
+      label: yeastLabel,
       kind: "yeast",
       bakersPercentage: yeast,
       grams: totalFlourGrams * yeast,
@@ -183,7 +197,7 @@ export function buildIngredientList(params: {
   if (fat > 0) {
     ingredients.push({
       id: "fat",
-      label: "Fat",
+      label: fatLabel,
       kind: "fat",
       bakersPercentage: fat,
       grams: totalFlourGrams * fat,

@@ -113,7 +113,7 @@ describe("launch interface", () => {
     await user.type(search, "sheet pan");
     await user.click(
       await screen.findByRole("option", {
-        name: /switch to sicilian or sheet pan/i,
+        name: /switch to pan pizza/i,
       })
     );
     expect(useCalculatorStore.getState().formatMode).toBe("sheet-pan");

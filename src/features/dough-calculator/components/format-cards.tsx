@@ -75,14 +75,14 @@ function RectangularGlyph({ selected }: { selected: boolean }) {
 const FORMATS = [
   {
     value: "round" as const,
-    title: "Round on steel",
-    detail: "Diameter-led circular field",
+    title: "Round pizza",
+    detail: "For a steel, stone, or pizza oven",
     Glyph: RoundGlyph,
   },
   {
     value: "sheet-pan" as const,
-    title: "Sicilian or sheet pan",
-    detail: "Interior planar field",
+    title: "Pan pizza",
+    detail: "Sicilian, grandma, or sheet pan",
     Glyph: RectangularGlyph,
   },
 ];

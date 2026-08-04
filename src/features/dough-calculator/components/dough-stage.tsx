@@ -73,6 +73,9 @@ export function DoughStage({
   const applyPreset = useCalculatorStore((state) => state.applyPreset);
   const fieldState = toVisualState(values, result);
   const isRound = values.shape === "round";
+  const activePreset = CALCULATOR_PRESETS.find(
+    (preset) => preset.id === presetId
+  );
 
   const sizeValue = isRound
     ? `${values.diameterInches}″ diameter`
@@ -90,15 +93,16 @@ export function DoughStage({
               Dough Lab / Online
             </span>
             <h1 className="text-[1.75rem] leading-[1.08] font-normal tracking-[-0.022em] text-foreground sm:text-[2rem]">
-              Precision dough, measured by area.
+              Pizza dough without the guesswork.
             </h1>
             <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-              Choose the geometry. The formula resolves live in baker&rsquo;s
-              percentages.
+              Pick a style and size. Your ingredient weights update as you go.
             </p>
           </div>
 
-          <FormatCards value={formatMode} onChange={onFormatChange} />
+          <div data-onboarding-target="format">
+            <FormatCards value={formatMode} onChange={onFormatChange} />
+          </div>
 
           <div className="mt-auto flex flex-col gap-2">
             <Label
@@ -127,6 +131,11 @@ export function DoughStage({
                 ))}
               </SelectContent>
             </Select>
+            {activePreset ? (
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                {activePreset.description}
+              </p>
+            ) : null}
           </div>
         </div>
 

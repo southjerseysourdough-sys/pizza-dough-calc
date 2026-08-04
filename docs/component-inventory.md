@@ -80,7 +80,7 @@ These are domain compositions rather than replacement control primitives. They r
 | Animated number        | `src/features/dough-calculator/components/animated-number.tsx`  | Total-weight transitions without an initial count-up               |
 | Format selection       | `src/features/dough-calculator/components/format-cards.tsx`     | Shared selected marker transition                                  |
 | Pizza preview          | `src/features/dough-calculator/components/dough-field.tsx`      | Reversible indexed frames; direct final frame under reduced motion |
-| Advanced layer         | `src/features/dough-calculator/components/dough-calculator.tsx` | Compact reveal/removal                                             |
+| More-controls layer    | `src/features/dough-calculator/components/dough-calculator.tsx` | Compact reveal/removal                                             |
 | Ingredient composition | `src/features/dough-calculator/components/composition-bar.tsx`  | Segment width changes                                              |
 | Warnings               | `src/features/dough-calculator/components/issue-list.tsx`       | Advisory/error arrival and removal                                 |
 
@@ -88,15 +88,19 @@ All Motion components call `useReducedMotion`; content is present without waitin
 
 ## shadcn / Base UI source
 
-| Primitive | Local path                      | Used for                                                               |
-| --------- | ------------------------------- | ---------------------------------------------------------------------- |
-| Input     | `src/components/ui/input.tsx`   | Numeric fields, flour names, custom ingredients                        |
-| Select    | `src/components/ui/select.tsx`  | Recipe profiles, baking surfaces, pans, leavening and ingredient types |
-| Slider    | `src/components/ui/slider.tsx`  | Linear measurement rails paired with editable numeric inputs           |
-| Switch    | `src/components/ui/switch.tsx`  | Advanced state, manual sizing, and measured-pan state                  |
-| Label     | `src/components/ui/label.tsx`   | Programmatic input names                                               |
-| Button    | `src/components/ui/button.tsx`  | Add/remove/normalize editor actions                                    |
-| Tooltip   | `src/components/ui/tooltip.tsx` | Shared accessible tooltip provider                                     |
+| Primitive | Local path                      | Used for                                                                    |
+| --------- | ------------------------------- | --------------------------------------------------------------------------- |
+| Input     | `src/components/ui/input.tsx`   | Numeric fields, flour names, custom ingredients                             |
+| Select    | `src/components/ui/select.tsx`  | Recipe profiles, optional surface fit, pans, leavening and ingredient types |
+| Slider    | `src/components/ui/slider.tsx`  | Linear measurement rails paired with editable numeric inputs                |
+| Switch    | `src/components/ui/switch.tsx`  | More-controls state and manual sizing                                       |
+| Label     | `src/components/ui/label.tsx`   | Programmatic input names                                                    |
+| Button    | `src/components/ui/button.tsx`  | Add/remove/normalize editor actions                                         |
+| Tooltip   | `src/components/ui/tooltip.tsx` | Shared accessible tooltip provider                                          |
+
+The header readability dialog is project-specific UI composed from the shared
+Dialog, Button, and native radio primitives. It applies persisted root-level
+font and text-size attributes without introducing a second theme system.
 
 These retained primitives supply keyboard behavior, focus management, labeling, popup positioning, and touch semantics. They were restyled at shared source paths rather than replaced by decorative custom controls.
 

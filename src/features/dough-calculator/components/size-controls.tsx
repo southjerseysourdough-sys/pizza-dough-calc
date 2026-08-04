@@ -90,46 +90,51 @@ export function SizeControls({ sizing }: { sizing: SizingResult | null }) {
             onChange={(diameterInches) => setValues({ diameterInches })}
           />
 
-          <div className="flex flex-col gap-2">
-            <span className="flex items-center gap-1">
-              <Label htmlFor="baking-surface">Baking surface</Label>
-              <ContextHelp
-                content={{
-                  term: "Baking Steel fit",
-                  definition:
-                    "The selected surface is checked against the pizza diameter for physical fit.",
-                  effect:
-                    "It changes fit guidance only, never the dough formula.",
-                  current:
-                    STEEL_PROFILES.find((profile) => profile.id === surfaceId)
-                      ?.name ?? "Custom surface",
+          {showAdvanced ? (
+            <div className="surface-instrument flex flex-col gap-2 p-4">
+              <span className="flex items-center gap-1">
+                <Label htmlFor="baking-surface">
+                  Optional surface fit check
+                </Label>
+                <ContextHelp
+                  content={{
+                    term: "Baking surface fit",
+                    definition:
+                      "The selected surface is checked against the pizza diameter for physical fit.",
+                    effect:
+                      "It changes fit guidance only, never the ingredient amounts.",
+                    current:
+                      STEEL_PROFILES.find((profile) => profile.id === surfaceId)
+                        ?.name ?? "Custom surface",
+                  }}
+                />
+              </span>
+              <Select
+                value={surfaceId}
+                onValueChange={(next) => {
+                  if (typeof next === "string") setSurfaceId(next);
                 }}
-              />
-            </span>
-            <Select
-              value={surfaceId}
-              onValueChange={(next) => {
-                if (typeof next === "string") setSurfaceId(next);
-              }}
-              items={Object.fromEntries(
-                STEEL_PROFILES.map((profile) => [profile.id, profile.name])
-              )}
-            >
-              <SelectTrigger id="baking-surface" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STEEL_PROFILES.map((profile) => (
-                  <SelectItem key={profile.id} value={profile.id}>
-                    {profile.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              Used for fit guidance only. It never changes your formula.
-            </p>
-          </div>
+                items={Object.fromEntries(
+                  STEEL_PROFILES.map((profile) => [profile.id, profile.name])
+                )}
+              >
+                <SelectTrigger id="baking-surface" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STEEL_PROFILES.map((profile) => (
+                    <SelectItem key={profile.id} value={profile.id}>
+                      {profile.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Useful only for an overhang warning. It does not alter the
+                recipe.
+              </p>
+            </div>
+          ) : null}
         </>
       ) : (
         <>
@@ -176,62 +181,32 @@ export function SizeControls({ sizing }: { sizing: SizingResult | null }) {
             </div>
           )}
 
-          <div className="surface-instrument flex items-start justify-between gap-3 px-3 py-2.5">
-            <span className="flex items-center gap-1">
-              <Label
-                htmlFor="pan-measured"
-                className="text-sm leading-snug font-normal"
-              >
-                I measured the flat inside baking surface of this pan
-              </Label>
-              <ContextHelp
-                content={{
-                  term: "Measured pan interior",
-                  definition:
-                    "Only the flat interior baking surface contributes to the calculated pizza area.",
-                  effect:
-                    "Accurate length and width produce accurate dough weight.",
-                  current: `${values.usableInteriorLengthInches} by ${values.usableInteriorWidthInches} inches`,
-                }}
-              />
-            </span>
-            <Switch
-              id="pan-measured"
-              checked={panInteriorMeasured}
-              onCheckedChange={setPanInteriorMeasured}
-            />
-          </div>
-
           <div className="grid gap-4 sm:grid-cols-2">
             <NumericField
-              label={
-                panInteriorMeasured
-                  ? "Measured interior length"
-                  : "Interior length (nominal)"
-              }
+              label="Flat inside length"
               unit="in"
               value={values.usableInteriorLengthInches}
               min={4}
               max={30}
               step={0.25}
-              onChange={(usableInteriorLengthInches) =>
-                setValues({ usableInteriorLengthInches })
-              }
+              hint="Editing this confirms your own measurement."
+              onChange={(usableInteriorLengthInches) => {
+                setValues({ usableInteriorLengthInches });
+                setPanInteriorMeasured(true);
+              }}
             />
             <NumericField
-              label={
-                panInteriorMeasured
-                  ? "Measured interior width"
-                  : "Interior width (nominal)"
-              }
+              label="Flat inside width"
               unit="in"
               value={values.usableInteriorWidthInches}
               min={4}
               max={30}
               step={0.25}
-              onChange={(usableInteriorWidthInches) =>
-                setValues({ usableInteriorWidthInches })
-              }
+              hint="Editing this confirms your own measurement."
+              onChange={(usableInteriorWidthInches) => {
+                setValues({ usableInteriorWidthInches });
+                setPanInteriorMeasured(true);
+              }}
             />
           </div>
         </>
