@@ -25,7 +25,7 @@ notification enhancements, and deterministic text/JSON bake reports.
 | Styling    | Tailwind CSS v4 (CSS-first config in `src/app/globals.css`) |
 | Components | shadcn/ui on Base UI (`base-nova` style)                    |
 | Effects    | React Bits, via the shadcn registry                         |
-| Visuals    | SVG Dough Field + Vengeance UI Perspective Grid             |
+| Visuals    | Reference pizza frame sequence + Perspective Grid           |
 | Animation  | CSS/requestAnimationFrame + scoped Anime.js SVG timelines   |
 | State      | Zustand                                                     |
 | Forms      | React Hook Form + Zod                                       |

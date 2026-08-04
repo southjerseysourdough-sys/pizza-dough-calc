@@ -33,6 +33,7 @@ function isStaticAsset(url) {
   return (
     url.origin === self.location.origin &&
     (url.pathname.startsWith("/_next/static/") ||
+      url.pathname.startsWith("/media/") ||
       url.pathname === "/icon.svg" ||
       url.pathname === "/icon-192.png" ||
       url.pathname === "/icon-512.png" ||

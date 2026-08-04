@@ -272,6 +272,7 @@ describe("launch domain", () => {
     expect(source).toContain(`const CACHE_VERSION = "${APP_CACHE_VERSION}"`);
     expect(source).toContain('url.search === ""');
     expect(source).toContain('request.method !== "GET"');
+    expect(source).toContain('url.pathname.startsWith("/media/")');
     expect(source).toContain('message?.type === "SKIP_WAITING"');
   });
 

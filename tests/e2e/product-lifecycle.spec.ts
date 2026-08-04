@@ -135,23 +135,21 @@ test("keeps actions reachable without horizontal overflow at 375 pixels", async 
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
-test("morphs the Dough Field from radial to planar geometry", async ({
+test("maps the pizza frames forward and backward with format selection", async ({
   page,
 }) => {
   await page.goto("/");
   const field = page.locator("[data-dough-field]");
-  const perimeter = field.locator("[data-field-active]");
-  const pizzaCrust = field.locator("[data-pizza-crust]");
-  const radialPath = await perimeter.getAttribute("d");
-  const radialCrustPath = await pizzaCrust.getAttribute("d");
+  const sequence = field.locator("[data-pizza-sequence]");
+  await expect(sequence).toHaveAttribute("data-pizza-frame", "0");
 
   await page.getByText("Sicilian or sheet pan", { exact: true }).click();
   await expect(field).toHaveAttribute("data-dough-field", "rectangular");
-  await expect.poll(() => perimeter.getAttribute("d")).not.toBe(radialPath);
-  await expect
-    .poll(() => pizzaCrust.getAttribute("d"))
-    .not.toBe(radialCrustPath);
+  await expect(sequence).toHaveAttribute("data-pizza-frame", "29");
   await expect(field).toContainText("Pizza Preview / Pan");
+
+  await page.getByText("Round on steel", { exact: true }).click();
+  await expect(sequence).toHaveAttribute("data-pizza-frame", "0");
 });
 
 test("serves the manifest and supports dark, light, and reduced-motion paths", async ({

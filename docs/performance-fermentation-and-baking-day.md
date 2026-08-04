@@ -10,13 +10,13 @@ Next/React runtime.
 
 | Browser-requested JavaScript | Baseline raw |   Final raw | Baseline gzip | Final gzip | Baseline Brotli | Final Brotli |
 | ---------------------------- | -----------: | ----------: | ------------: | ---------: | --------------: | -----------: |
-| Calculator `/`               |  1,476,437 B |   997,096 B |     432,750 B |  309,508 B |       369,962 B |    269,463 B |
-| Baking Day `/bake`           |  1,657,526 B | 1,478,918 B |     496,116 B |  442,400 B |       426,252 B |    381,662 B |
-| `/bake` minus `/`            |    181,089 B |   481,822 B |      63,366 B |  132,892 B |        56,290 B |    112,199 B |
+| Calculator `/`               |  1,476,437 B |   990,602 B |     432,750 B |  306,937 B |       369,962 B |    267,339 B |
+| Baking Day `/bake`           |  1,657,526 B | 1,469,315 B |     496,116 B |  438,578 B |       426,252 B |    378,449 B |
+| `/bake` minus `/`            |    181,089 B |   478,713 B |      63,366 B |  131,641 B |        56,290 B |    111,110 B |
 
-The initial calculator is 479,341 bytes raw and 123,242 bytes gzip smaller: a
-32.5% raw and 28.5% gzip reduction. It is below the 350 KB gzip launch target.
-Baking Day is also 53,716 bytes gzip smaller in absolute terms. Its relative
+The initial calculator is 485,835 bytes raw and 125,813 bytes gzip smaller: a
+32.9% raw and 29.1% gzip reduction. It is below the 350 KB gzip launch target.
+Baking Day is also 57,538 bytes gzip smaller in absolute terms. Its relative
 increment is larger only because the comparison route shed large shared
 dependencies that Baking Day still needs for durable session validation.
 
@@ -32,7 +32,7 @@ safe-area handling, loading/error states, and offline/install UI.
 |   290,740 B |  66,589 B |  53,914 B | Zod and durable validation; absent from initial `/`, present on `/bake` |
 |   232,792 B |  72,523 B |  62,018 B | React DOM runtime                                                       |
 |   146,333 B |  39,146 B |  33,594 B | shared framework/vendor runtime                                         |
-|   137,986 B |  41,945 B |  35,262 B | calculator/launch application code                                      |
+|   134,601 B |  40,641 B |  34,245 B | calculator/launch application code                                      |
 
 Hash filenames are omitted because a production rebuild may rename them. The
 measurement script reports exact current filenames for artifact matching.
@@ -40,8 +40,11 @@ measurement script reports exact current filenames for artifact matching.
 ## Boundary and loading decisions
 
 - Removed the second general animation runtime from eager components. Small
-  numeric and reveal effects use CSS or `requestAnimationFrame`; Anime.js stays
-  scoped to the two intentional SVG visualizations.
+  numeric, reveal, and pizza-frame effects use CSS or `requestAnimationFrame`;
+  Anime.js stays scoped to the Formula Signature drawing.
+- The reference-bake pizza transition is one 472 KiB WebP sprite containing 30
+  indexed 480×270 frames. It adds no JavaScript library, makes one request, can
+  reverse from its current frame, and swaps immediately under reduced motion.
 - Zod validation, saved-recipe persistence, share decoding, archive handling,
   fermentation schemas, and PDF generation now enter the calculator only when
   their workflows are requested.

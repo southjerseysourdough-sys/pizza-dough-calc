@@ -4,13 +4,13 @@ Updated for the recipe-lifecycle continuation on 2026-08-03. Registry URLs are c
 
 ## Recipe lifecycle additions
 
-| Capability                | Component or library  | Version / source | Local use                                                                                                 |
-| ------------------------- | --------------------- | ---------------- | --------------------------------------------------------------------------------------------------------- |
-| Dough Field choreography  | Anime.js              | `4.5.0`          | Scoped SVG perimeter morphing, contour retraction, dimension sequencing, and cleanup in `dough-field.tsx` |
-| Formula Signature drawing | Anime.js              | `4.5.0`          | One-shot drawable paths for the live signature; saved, print, and PDF signatures remain static            |
-| Print workflow            | react-to-print        | `3.3.0`          | Prints a dedicated semantic, white-paper recipe sheet instead of the application chrome                   |
-| PDF workflow              | `@react-pdf/renderer` | `4.5.1`          | Dynamically imported selectable-text PDF with vector signature and pagination                             |
-| Browser verification      | Playwright            | `1.62.1`         | Chromium lifecycle, persistence, sharing, artifacts, manifest, theme, reduced-motion, and mobile checks   |
+| Capability                 | Component or library   | Version / source | Local use                                                                                               |
+| -------------------------- | ---------------------- | ---------------- | ------------------------------------------------------------------------------------------------------- |
+| Pizza preview choreography | Native animation frame | Browser API      | Reversible 30-frame reference-bake sequence with no canvas, WebGL, or autoplay dependency               |
+| Formula Signature drawing  | Anime.js               | `4.5.0`          | One-shot drawable paths for the live signature; saved, print, and PDF signatures remain static          |
+| Print workflow             | react-to-print         | `3.3.0`          | Prints a dedicated semantic, white-paper recipe sheet instead of the application chrome                 |
+| PDF workflow               | `@react-pdf/renderer`  | `4.5.1`          | Dynamically imported selectable-text PDF with vector signature and pagination                           |
+| Browser verification       | Playwright             | `1.62.1`         | Chromium lifecycle, persistence, sharing, artifacts, manifest, theme, reduced-motion, and mobile checks |
 
 ### New shadcn / Base UI primitives
 
@@ -19,7 +19,7 @@ Updated for the recipe-lifecycle continuation on 2026-08-03. Registry URLs are c
 | Dialog        | `corepack pnpm exec shadcn add dialog dropdown-menu --yes` | `src/components/ui/dialog.tsx`        | Naming, Saved Recipes, confirmations, clipboard fallback, and import preview |
 | Dropdown menu | `corepack pnpm exec shadcn add dialog dropdown-menu --yes` | `src/components/ui/dropdown-menu.tsx` | Secondary recipe actions with keyboard navigation and managed focus          |
 
-The existing Button source was retained when the registry installer offered to overwrite it. No Animate UI component was added: the installed Base UI primitives already provide the required interaction semantics, while Anime.js has a narrowly documented SVG role.
+The existing Button source was retained when the registry installer offered to overwrite it. No Animate UI component was added: the installed Base UI primitives already provide the required interaction semantics, while Anime.js remains narrowly scoped to Formula Signature drawing.
 
 ### Project-specific lifecycle components
 
@@ -75,14 +75,14 @@ These are domain compositions rather than replacement control primitives. They r
 
 ## Existing Motion components
 
-| Component              | Local path                                                      | Use                                                   |
-| ---------------------- | --------------------------------------------------------------- | ----------------------------------------------------- |
-| Animated number        | `src/features/dough-calculator/components/animated-number.tsx`  | Total-weight transitions without an initial count-up  |
-| Format selection       | `src/features/dough-calculator/components/format-cards.tsx`     | Shared selected marker transition                     |
-| Dough Field            | `src/features/dough-calculator/components/dough-field.tsx`      | Final-state fallback around Anime-driven SVG geometry |
-| Advanced layer         | `src/features/dough-calculator/components/dough-calculator.tsx` | Compact reveal/removal                                |
-| Ingredient composition | `src/features/dough-calculator/components/composition-bar.tsx`  | Segment width changes                                 |
-| Warnings               | `src/features/dough-calculator/components/issue-list.tsx`       | Advisory/error arrival and removal                    |
+| Component              | Local path                                                      | Use                                                                |
+| ---------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Animated number        | `src/features/dough-calculator/components/animated-number.tsx`  | Total-weight transitions without an initial count-up               |
+| Format selection       | `src/features/dough-calculator/components/format-cards.tsx`     | Shared selected marker transition                                  |
+| Pizza preview          | `src/features/dough-calculator/components/dough-field.tsx`      | Reversible indexed frames; direct final frame under reduced motion |
+| Advanced layer         | `src/features/dough-calculator/components/dough-calculator.tsx` | Compact reveal/removal                                             |
+| Ingredient composition | `src/features/dough-calculator/components/composition-bar.tsx`  | Segment width changes                                              |
+| Warnings               | `src/features/dough-calculator/components/issue-list.tsx`       | Advisory/error arrival and removal                                 |
 
 All Motion components call `useReducedMotion`; content is present without waiting for an animation.
 
@@ -102,10 +102,12 @@ These retained primitives supply keyboard behavior, focus management, labeling, 
 
 ## Project-specific visual component
 
-### Dough Field
+### Pizza preview
 
 - Local path: `src/features/dough-calculator/components/dough-field.tsx`
-- Built from: the official Perspective Grid, pure geometry helpers, SVG measurement primitives, design tokens, live calculation data, and scoped Anime.js timelines.
+- Built from: a South Jersey Sourdough reference bake, a 30-frame WebP sprite,
+  the official Perspective Grid, SVG framing marks, live calculation data, and
+  a native `requestAnimationFrame` controller.
 - Why custom: no registry component represents round diameter contours, sheet-pan interior dimensions, hydration, dough loading, total weight, and quantity together. The brief explicitly permits this one domain-specific visualization.
 - Accessibility: the SVG is decorative, while a live text caption describes the exact geometry and values. Mode selection and calculation never depend on the drawing. Reduced-motion users receive the final geometry immediately.
 - Scientific scope: illustrative only; the interface labels it as such and makes no simulation claim.
