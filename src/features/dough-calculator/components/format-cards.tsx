@@ -1,9 +1,9 @@
 "use client";
 
 import { CheckIcon } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
 
 import SpotlightCard from "@/components/effects/SpotlightCard";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
 import type { CalculatorFormatMode } from "../store/calculator-store";
 
@@ -146,11 +146,9 @@ export function FormatCards({
                 )}
               >
                 {selected ? (
-                  <motion.span
-                    layoutId={prefersReducedMotion ? undefined : "format-check"}
-                  >
+                  <span className="motion-safe:animate-in motion-safe:duration-150 motion-safe:zoom-in-75">
                     <CheckIcon aria-hidden="true" className="size-3" />
-                  </motion.span>
+                  </span>
                 ) : null}
               </span>
             </label>

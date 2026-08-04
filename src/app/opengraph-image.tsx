@@ -22,9 +22,9 @@ export default function Image() {
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        backgroundColor: "#17140f",
+        backgroundColor: "#08090a",
         backgroundImage:
-          "radial-gradient(circle at 78% 12%, #4a3b22 0%, transparent 55%)",
+          "radial-gradient(circle at 78% 12%, #23252a 0%, transparent 55%)",
         padding: "72px 80px",
       }}
     >
@@ -34,7 +34,7 @@ export default function Image() {
             fontSize: 26,
             letterSpacing: 4,
             textTransform: "uppercase",
-            color: "#c8a24a",
+            color: "#e4f222",
           }}
         >
           {siteConfig.brand}
@@ -46,7 +46,7 @@ export default function Image() {
           style={{
             fontSize: 92,
             lineHeight: 1.05,
-            color: "#f5eee2",
+            color: "#ffffff",
             letterSpacing: -2,
           }}
         >
@@ -55,7 +55,7 @@ export default function Image() {
         <div
           style={{
             fontSize: 32,
-            color: "#a89880",
+            color: "#8a8f98",
             maxWidth: 820,
             lineHeight: 1.35,
           }}
@@ -65,8 +65,8 @@ export default function Image() {
       </div>
 
       <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-        <div style={{ height: 4, width: 96, backgroundColor: "#c8a24a" }} />
-        <div style={{ fontSize: 24, color: "#8a7c69" }}>
+        <div style={{ height: 4, width: 96, backgroundColor: "#e4f222" }} />
+        <div style={{ fontSize: 24, color: "#8a8f98" }}>
           Steel · Stone · Sheet pan
         </div>
       </div>

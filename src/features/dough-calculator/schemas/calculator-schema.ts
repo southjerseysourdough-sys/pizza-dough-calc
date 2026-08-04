@@ -1,12 +1,18 @@
 import { z } from "zod";
 
-import type {
-  CustomIngredientInput,
-  DoughFormulaInput,
-  FlourBlendItem,
-  LeaveningInput,
-  SizingInput,
-} from "../types/dough";
+import type { DoughFormulaInput } from "../types/dough";
+import type { CalculatorFormValues } from "../types/calculator-form";
+import {
+  FLOUR_BLEND_TOLERANCE_PERCENT,
+  isReservedIngredientName,
+} from "../utils/form-values";
+export type { CalculatorFormValues } from "../types/calculator-form";
+export {
+  FLOUR_BLEND_TOLERANCE_PERCENT,
+  RESERVED_INGREDIENT_NAMES,
+  isReservedIngredientName,
+  toDoughFormulaInput,
+} from "../utils/form-values";
 
 /**
  * Validation for the user-editable calculator form.
@@ -16,9 +22,6 @@ import type {
  * performs that conversion at the boundary, so the engine only ever sees
  * decimals and the interface only ever shows percentages.
  */
-
-/** Percentage points a flour blend may drift from 100 before it is rejected. */
-export const FLOUR_BLEND_TOLERANCE_PERCENT = 0.1;
 
 const percent = z
   .number({ message: "Enter a number." })
@@ -126,19 +129,6 @@ export const flourBlendItemSchema = z.object({
  * substring test: "Poolish Salt", "Vital Wheat Gluten" and "Milk Powder" are
  * all legitimate ingredients that a substring rule would wrongly reject.
  */
-export const RESERVED_INGREDIENT_NAMES = [
-  "flour",
-  "water",
-  "salt",
-  "yeast",
-  "starter",
-] as const;
-
-export function isReservedIngredientName(name: string): boolean {
-  const normalized = name.trim().toLowerCase();
-  return RESERVED_INGREDIENT_NAMES.some((reserved) => reserved === normalized);
-}
-
 export const customIngredientSchema = z
   .object({
     id: z.string().min(1),
@@ -155,7 +145,7 @@ export const customIngredientSchema = z
     }
   });
 
-export const calculatorFormSchema = z
+export const calculatorFormSchema: z.ZodType<CalculatorFormValues> = z
   .object({
     shape: z.enum(["round", "rectangular"]),
     diameterInches: positiveNumber,
@@ -202,91 +192,3 @@ export const calculatorFormSchema = z
       });
     }
   });
-
-export type CalculatorFormValues = z.infer<typeof calculatorFormSchema>;
-
-const toDecimal = (percentValue: number): number => percentValue / 100;
-
-function toSizingInput(values: CalculatorFormValues): SizingInput {
-  const selection =
-    values.sizingMode === "dough-loading"
-      ? {
-          mode: "dough-loading" as const,
-          doughLoadingGramsPerSquareInch: values.doughLoadingGramsPerSquareInch,
-        }
-      : {
-          mode: "manual-dough-weight" as const,
-          doughWeightPerUnitGrams: values.manualDoughWeightGrams,
-        };
-
-  return values.shape === "round"
-    ? {
-        shape: "round",
-        diameterInches: values.diameterInches,
-        quantity: values.quantity,
-        selection,
-      }
-    : {
-        shape: "rectangular",
-        usableInteriorLengthInches: values.usableInteriorLengthInches,
-        usableInteriorWidthInches: values.usableInteriorWidthInches,
-        quantity: values.quantity,
-        selection,
-      };
-}
-
-function toLeaveningInput(values: CalculatorFormValues): LeaveningInput {
-  const starter = {
-    percentageOfTotalFlour: toDecimal(values.starterPercent),
-    hydration: toDecimal(values.starterHydrationPercent),
-  };
-
-  switch (values.leaveningMethod) {
-    case "commercial-yeast":
-      return {
-        method: "commercial-yeast",
-        yeastType: values.yeastType,
-        yeastPercentage: toDecimal(values.yeastPercent),
-      };
-    case "sourdough":
-      return { method: "sourdough", starter };
-    case "hybrid":
-      return {
-        method: "hybrid",
-        yeastType: values.yeastType,
-        yeastPercentage: toDecimal(values.yeastPercent),
-        starter,
-      };
-  }
-}
-
-/** Boundary conversion from form values to the engine's decimal input. */
-export function toDoughFormulaInput(
-  values: CalculatorFormValues
-): DoughFormulaInput {
-  const flourBlend: FlourBlendItem[] = values.flourBlend.map((item) => ({
-    id: item.id,
-    name: item.name,
-    percentage: toDecimal(item.percentage),
-  }));
-
-  const customIngredients: CustomIngredientInput[] =
-    values.customIngredients.map((item) => ({
-      id: item.id,
-      name: item.name,
-      percentage: toDecimal(item.percentage),
-    }));
-
-  return {
-    sizing: toSizingInput(values),
-    hydration: toDecimal(values.hydrationPercent),
-    salt: toDecimal(values.saltPercent),
-    fatType: values.fatType,
-    fat: toDecimal(values.fatPercent),
-    sugar: toDecimal(values.sugarPercent),
-    malt: toDecimal(values.maltPercent),
-    leavening: toLeaveningInput(values),
-    customIngredients,
-    flourBlend,
-  };
-}

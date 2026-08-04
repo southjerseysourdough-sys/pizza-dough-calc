@@ -5,6 +5,7 @@ import {
   FolderOpenIcon,
   PencilIcon,
   PlayIcon,
+  SaveIcon,
   Trash2Icon,
 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
@@ -30,6 +31,7 @@ import { createRecipePresentationModel } from "../utils/recipe-presentation";
 import { FormulaSignature } from "./formula-signature";
 import { formatTimelineTimestamp } from "../domain/fermentation";
 import { startBakingDaySession } from "../utils/start-baking-day";
+import { dispatchLaunchAction } from "@/features/launch/ui/launch-events";
 
 export function SavedRecipesDialog({
   open,
@@ -46,6 +48,7 @@ export function SavedRecipesDialog({
   const renameRecipe = useRecipeLibraryStore((state) => state.rename);
   const duplicateRecipe = useRecipeLibraryStore((state) => state.duplicate);
   const deleteRecipe = useRecipeLibraryStore((state) => state.delete);
+  const saveRecipe = useRecipeLibraryStore((state) => state.save);
   const setActiveRecipeId = useRecipeLibraryStore(
     (state) => state.setActiveRecipeId
   );
@@ -74,10 +77,10 @@ export function SavedRecipesDialog({
     onOpenChange(false);
   };
 
-  const confirmRename = (recipe: LocalSavedPizzaRecipeV2) => {
+  const confirmRename = async (recipe: LocalSavedPizzaRecipeV2) => {
     const name = renameDraft.trim();
     if (!name || name.length > RECIPE_NAME_MAX_LENGTH) return;
-    const result = renameRecipe(recipe.id, name);
+    const result = await renameRecipe(recipe.id, name);
     if (result.ok) {
       if (activeRecipeId === recipe.id) setWorkingName(name);
       setStatusMessage(`Recipe renamed to ${name}.`);
@@ -85,15 +88,15 @@ export function SavedRecipesDialog({
     } else setStatusMessage(result.error.message);
   };
 
-  const duplicate = (recipe: LocalSavedPizzaRecipeV2) => {
-    const result = duplicateRecipe(recipe.id);
+  const duplicate = async (recipe: LocalSavedPizzaRecipeV2) => {
+    const result = await duplicateRecipe(recipe.id);
     setStatusMessage(
       result.ok ? `${recipe.document.name} duplicated.` : result.error.message
     );
   };
 
-  const remove = (recipe: LocalSavedPizzaRecipeV2) => {
-    const result = deleteRecipe(recipe.id);
+  const remove = async (recipe: LocalSavedPizzaRecipeV2) => {
+    const result = await deleteRecipe(recipe.id);
     setStatusMessage(
       result.ok ? `${recipe.document.name} deleted.` : result.error.message
     );
@@ -139,8 +142,35 @@ export function SavedRecipesDialog({
                 <FolderOpenIcon className="mx-auto mb-3 size-5 text-muted-foreground" />
                 <p className="text-sm text-foreground">No saved recipes yet</p>
                 <p className="mt-1 max-w-xs text-xs text-muted-foreground">
-                  Save the current formula to keep it in this browser.
+                  Saving keeps this editable formula on this device. Export JSON
+                  from Data Management for a portable backup.
                 </p>
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={async () => {
+                      const result = await saveRecipe(currentDocument);
+                      setStatusMessage(
+                        result.ok
+                          ? `${currentDocument.name} saved to My Recipes.`
+                          : result.error.message
+                      );
+                    }}
+                  >
+                    <SaveIcon />
+                    Save Current Recipe
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={async () => {
+                      onOpenChange(false);
+                      dispatchLaunchAction("data");
+                    }}
+                  >
+                    Data &amp; backup
+                  </Button>
+                </div>
               </div>
             </div>
           ) : (
@@ -181,13 +211,13 @@ export function SavedRecipesDialog({
                               }
                               onKeyDown={(event) => {
                                 if (event.key === "Enter")
-                                  confirmRename(recipe);
+                                  void confirmRename(recipe);
                                 if (event.key === "Escape") setRenamingId(null);
                               }}
                             />
                             <Button
                               size="sm"
-                              onClick={() => confirmRename(recipe)}
+                              onClick={() => void confirmRename(recipe)}
                             >
                               Save
                             </Button>
@@ -263,7 +293,7 @@ export function SavedRecipesDialog({
                           variant="ghost"
                           size="icon-xs"
                           aria-label={`Duplicate ${recipe.document.name}`}
-                          onClick={() => duplicate(recipe)}
+                          onClick={() => void duplicate(recipe)}
                         >
                           <CopyIcon />
                         </Button>
@@ -298,7 +328,7 @@ export function SavedRecipesDialog({
                           <Button
                             variant="destructive"
                             size="xs"
-                            onClick={() => remove(recipe)}
+                            onClick={() => void remove(recipe)}
                           >
                             Delete recipe
                           </Button>

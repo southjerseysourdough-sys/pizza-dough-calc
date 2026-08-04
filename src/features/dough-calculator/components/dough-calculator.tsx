@@ -1,7 +1,6 @@
 "use client";
 
 import { CalendarClockIcon, WrenchIcon } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import dynamic from "next/dynamic";
 
 import { Switch } from "@/components/ui/switch";
@@ -14,7 +13,7 @@ import { PAN_PROFILES, STEEL_PROFILES } from "../presets/equipment";
 import { findPreset } from "../presets/formulas";
 import { useCalculatorStore } from "../store/calculator-store";
 import { formatDoughLoading, formatPercentage } from "../utils/format";
-import { createRecipeDocument } from "../domain/recipe-document";
+import { createRecipeDraftDocument } from "../utils/recipe-draft";
 import { useRecipeLibraryStore } from "../store/recipe-library-store";
 import { CustomIngredientEditor } from "./custom-ingredient-editor";
 import { DoughStage } from "./dough-stage";
@@ -24,6 +23,7 @@ import { IssueList } from "./issue-list";
 import { RecipeSummary } from "./recipe-summary";
 import { RecipeStatus } from "./recipe-status";
 import { SizeControls } from "./size-controls";
+import { LaunchTools } from "@/features/launch/ui/launch-tools";
 
 const FermentationPlanner = dynamic(() =>
   import("./fermentation-planner").then((module) => module.FermentationPlanner)
@@ -109,7 +109,6 @@ function CommandValue({
 export function DoughCalculator() {
   useCalculatorPersistence();
 
-  const prefersReducedMotion = useReducedMotion();
   const presetId = useCalculatorStore((state) => state.presetId);
   const formatMode = useCalculatorStore((state) => state.formatMode);
   const setFormatMode = useCalculatorStore((state) => state.setFormatMode);
@@ -143,7 +142,7 @@ export function DoughCalculator() {
       "Custom surface")
     : (PAN_PROFILES.find((pan) => pan.id === panProfileId)?.name ??
       "Custom pan");
-  const recipeDocument = createRecipeDocument({
+  const recipeDocument = createRecipeDraftDocument({
     name: workingName ?? preset?.name ?? "Untitled pizza recipe",
     values,
     context: {
@@ -166,6 +165,8 @@ export function DoughCalculator() {
       />
 
       <RecipeStatus />
+
+      <LaunchTools document={recipeDocument.ok ? recipeDocument.value : null} />
 
       <section
         aria-label="Current recipe command strip"
@@ -234,106 +235,95 @@ export function DoughCalculator() {
       <div className="grid gap-4 lg:grid-cols-12">
         <div className="order-2 flex flex-col gap-4 lg:order-1 lg:col-span-7 xl:col-span-8">
           <div className="surface-workbench overflow-hidden">
-            <Bench eyebrow="01 / Profile" title="Formula starting point">
-              <div className="flex flex-col gap-3">
-                <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                  {preset?.description}{" "}
-                  <span className="text-secondary-foreground">
-                    Every value below remains editable.
-                  </span>
-                </p>
-                <div className="grid grid-cols-3 gap-px overflow-hidden rounded-md border-[0.5px] border-graphite bg-graphite">
-                  <ProfileStat
-                    label="Hydration"
-                    value={formatPercentage(values.hydrationPercent / 100)}
-                  />
-                  <ProfileStat
-                    label="Salt"
-                    value={formatPercentage(values.saltPercent / 100)}
-                  />
-                  <ProfileStat
-                    label="Loading"
-                    value={formatDoughLoading(
-                      values.doughLoadingGramsPerSquareInch
-                    )}
-                  />
+            <div data-onboarding-target="format">
+              <Bench eyebrow="01 / Profile" title="Formula starting point">
+                <div className="flex flex-col gap-3">
+                  <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                    {preset?.description}{" "}
+                    <span className="text-secondary-foreground">
+                      Every value below remains editable.
+                    </span>
+                  </p>
+                  <div className="grid grid-cols-3 gap-px overflow-hidden rounded-md border-[0.5px] border-graphite bg-graphite">
+                    <ProfileStat
+                      label="Hydration"
+                      value={formatPercentage(values.hydrationPercent / 100)}
+                    />
+                    <ProfileStat
+                      label="Salt"
+                      value={formatPercentage(values.saltPercent / 100)}
+                    />
+                    <ProfileStat
+                      label="Loading"
+                      value={formatDoughLoading(
+                        values.doughLoadingGramsPerSquareInch
+                      )}
+                    />
+                  </div>
                 </div>
-              </div>
-            </Bench>
+              </Bench>
+            </div>
 
-            <Bench eyebrow="02 / Geometry" title="Size and equipment">
-              <SizeControls sizing={result?.sizing ?? null} />
-            </Bench>
+            <div data-onboarding-target="geometry">
+              <Bench eyebrow="02 / Geometry" title="Size and equipment">
+                <SizeControls sizing={result?.sizing ?? null} />
+              </Bench>
+            </div>
 
-            <Bench eyebrow="03 / Formula" title="Dough composition">
-              <FormulaControls />
-            </Bench>
+            <div data-onboarding-target="formula">
+              <Bench eyebrow="03 / Formula" title="Dough composition">
+                <FormulaControls />
+              </Bench>
+            </div>
           </div>
 
-          <AnimatePresence initial={false}>
-            {showAdvanced ? (
-              <motion.div
-                key="advanced-controls"
-                initial={
-                  prefersReducedMotion
-                    ? false
-                    : { opacity: 0.7, height: "auto", y: -4 }
-                }
-                animate={{ opacity: 1, height: "auto", y: 0 }}
-                exit={
-                  prefersReducedMotion
-                    ? { opacity: 0, height: 0 }
-                    : { opacity: 0, height: 0, y: -4 }
-                }
-                transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
-                className="surface-workbench overflow-hidden"
-              >
-                <div className="flex items-center justify-between border-b-[0.5px] border-graphite px-5 py-4 sm:px-6">
-                  <div className="flex items-center gap-2">
-                    <WrenchIcon
-                      aria-hidden="true"
-                      className="size-3.5 text-acid-lime"
-                    />
-                    <div className="flex flex-col">
-                      <span className="font-mono text-[9px] tracking-[0.1em] text-acid-lime uppercase">
-                        Precision layer
-                      </span>
-                      <h2 className="text-base font-medium">
-                        Advanced configuration
-                      </h2>
-                    </div>
+          {showAdvanced ? (
+            <div className="surface-workbench overflow-hidden motion-safe:animate-in motion-safe:duration-200 motion-safe:fade-in motion-safe:slide-in-from-top-1">
+              <div className="flex items-center justify-between border-b-[0.5px] border-graphite px-5 py-4 sm:px-6">
+                <div className="flex items-center gap-2">
+                  <WrenchIcon
+                    aria-hidden="true"
+                    className="size-3.5 text-acid-lime"
+                  />
+                  <div className="flex flex-col">
+                    <span className="font-mono text-[9px] tracking-[0.1em] text-acid-lime uppercase">
+                      Precision layer
+                    </span>
+                    <h2 className="text-base font-medium">
+                      Advanced configuration
+                    </h2>
                   </div>
-                  <span className="hidden rounded-sm border-[0.5px] border-graphite px-2 py-1 font-mono text-[9px] text-muted-foreground sm:block">
-                    SIZING · FLOUR · LEAVENING · ENRICHMENT · PAN
-                  </span>
                 </div>
+                <span className="hidden rounded-sm border-[0.5px] border-graphite px-2 py-1 font-mono text-[9px] text-muted-foreground sm:block">
+                  SIZING · FLOUR · LEAVENING · ENRICHMENT · PAN
+                </span>
+              </div>
 
-                <div className="grid gap-6 p-5 sm:p-6 xl:grid-cols-2">
-                  <DetailBlock title="Main Dough Flour Blend" code="FLOUR.01">
-                    <FlourBlendEditor result={result} />
-                  </DetailBlock>
-                  <DetailBlock title="Custom ingredients" code="FORMULA.06">
-                    <CustomIngredientEditor result={result} />
-                  </DetailBlock>
-                  <button
-                    type="button"
-                    className="col-span-full flex min-h-11 items-center justify-center gap-2 rounded-md border-[0.5px] border-graphite bg-inset px-3 text-sm text-secondary-foreground hover:text-foreground"
-                    onClick={() => {
-                      setFermentationWorkspaceOpen(true);
-                      requestAnimationFrame(() =>
-                        document
-                          .querySelector("[data-fermentation-planner]")
-                          ?.scrollIntoView({ block: "start" })
-                      );
-                    }}
-                  >
-                    <CalendarClockIcon className="size-4 text-acid-lime" />
-                    Open fermentation planner
-                  </button>
-                </div>
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
+              <div className="grid gap-6 p-5 sm:p-6 xl:grid-cols-2">
+                <DetailBlock title="Main Dough Flour Blend" code="FLOUR.01">
+                  <FlourBlendEditor result={result} />
+                </DetailBlock>
+                <DetailBlock title="Custom ingredients" code="FORMULA.06">
+                  <CustomIngredientEditor result={result} />
+                </DetailBlock>
+                <button
+                  type="button"
+                  className="col-span-full flex min-h-11 items-center justify-center gap-2 rounded-md border-[0.5px] border-graphite bg-inset px-3 text-sm text-secondary-foreground hover:text-foreground"
+                  onClick={() => {
+                    setFermentationWorkspaceOpen(true);
+                    requestAnimationFrame(() =>
+                      document
+                        .querySelector("[data-fermentation-planner]")
+                        ?.scrollIntoView({ block: "start" })
+                    );
+                  }}
+                >
+                  <CalendarClockIcon className="size-4 text-acid-lime" />
+                  Open fermentation planner
+                </button>
+              </div>
+            </div>
+          ) : null}
 
           {preset && preset.assumptions.length > 0 ? (
             <section className="border-l-[0.5px] border-graphite px-4 py-2">

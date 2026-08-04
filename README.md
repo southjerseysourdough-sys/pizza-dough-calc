@@ -26,7 +26,7 @@ notification enhancements, and deterministic text/JSON bake reports.
 | Components | shadcn/ui on Base UI (`base-nova` style)                    |
 | Effects    | React Bits, via the shadcn registry                         |
 | Visuals    | SVG Dough Field + Vengeance UI Perspective Grid             |
-| Animation  | Motion + scoped Anime.js SVG timelines                      |
+| Animation  | CSS/requestAnimationFrame + scoped Anime.js SVG timelines   |
 | State      | Zustand                                                     |
 | Forms      | React Hook Form + Zod                                       |
 | Documents  | react-to-print + dynamically loaded React PDF               |
@@ -77,11 +77,21 @@ The app runs at http://localhost:3000.
   page load, but is never automatically added to My Recipes.
 - JSON import validates and previews the recipe before applying it; importing
   does not implicitly save it.
-- The web app manifest provides install metadata and icons. There is no service
-  worker, so the project does not claim offline support.
-- Browser notifications have no service worker and therefore are not promised
-  after the browser closes. Fermentation schedules are planning guidance, not
-  scientifically precise fermentation predictions.
+- A versioned archive can export or import the complete recipe library. Archive
+  imports validate and preview counts, offer merge or replacement, and rename
+  identifier collisions instead of silently overwriting local recipes.
+- The production-only service worker uses explicit `pdc-shell-v1` caches. The
+  optional **Prepare for Offline Use** action stores the calculator, Baking Day,
+  and their exact static assets; arbitrary share-query variants and imported
+  recipe contents are never placed in app caches.
+- Installation is progressive: the browser-owned prompt appears only after a
+  user chooses Install App, while iOS receives manual Add to Home Screen
+  guidance. No install or notification permission is requested automatically.
+- Prepared Baking Day sessions keep timestamp-based timers, stage completion,
+  and notes useful during a tested network loss. Browser storage can still be
+  evicted, and timers or notifications cannot run after the device powers off.
+  Fermentation schedules remain planning guidance, not scientifically precise
+  fermentation predictions.
 
 ## Structure
 

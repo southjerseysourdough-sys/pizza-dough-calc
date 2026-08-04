@@ -14,6 +14,7 @@ import {
   RotateCcwIcon,
   SkipForwardIcon,
   SunIcon,
+  WifiIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
@@ -31,6 +32,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
+import { usePwa } from "@/features/launch/pwa/pwa-provider";
 import {
   adjustTimer,
   createBakingSession,
@@ -75,6 +77,7 @@ type CompletionChoice = { stageId: string; skip: boolean } | null;
 
 export function BakingDay() {
   const { resolvedTheme, setTheme } = useTheme();
+  const { online, prepareOffline, registrationStatus } = usePwa();
   const [session, setSession] = useState<BakingSessionV1 | null>(null);
   const [loadMessage, setLoadMessage] = useState("Loading Baking Day session…");
   const [now, setNow] = useState(() => Date.now());
@@ -88,6 +91,9 @@ export function BakingDay() {
   const [notificationStatus, setNotificationStatus] = useState(
     "Timer alerts are in-app only."
   );
+  const [offlinePreparation, setOfflinePreparation] = useState<
+    "idle" | "working" | "ready" | "failed"
+  >("idle");
   const wakeLockRef = useRef<WakeLockLike | null>(null);
   const timerAnnouncedRef = useRef(false);
 
@@ -365,6 +371,17 @@ export function BakingDay() {
     setStatusMessage("Bake report JSON downloaded.");
   };
 
+  const prepareForOffline = async () => {
+    setOfflinePreparation("working");
+    const result = await prepareOffline();
+    setOfflinePreparation(result.ok ? "ready" : "failed");
+    setStatusMessage(
+      result.ok
+        ? "Baking Day and its core files are prepared for offline use on this browser."
+        : result.message
+    );
+  };
+
   if (!session || !baseTimeline || !currentStage) {
     return (
       <main className="grid min-h-dvh place-items-center bg-background p-5">
@@ -376,8 +393,11 @@ export function BakingDay() {
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
             {loadMessage}
           </p>
-          <Button render={<Link href="/" />} className="mt-5 rounded-md">
-            Return to calculator
+          <Button
+            render={<Link href="/?start=baking-day" />}
+            className="mt-5 rounded-md"
+          >
+            Start from current recipe
           </Button>
         </section>
       </main>
@@ -393,7 +413,7 @@ export function BakingDay() {
 
   return (
     <div className="min-h-dvh overflow-x-hidden bg-background text-foreground">
-      <header className="border-b-[0.5px] border-graphite bg-carbon">
+      <header className="safe-header border-b-[0.5px] border-graphite bg-carbon">
         <div className="mx-auto flex h-13 max-w-[88rem] items-center justify-between gap-3 px-4 sm:px-6">
           <div className="min-w-0">
             <p className="font-mono text-[9px] tracking-[0.1em] text-acid-lime uppercase">
@@ -868,6 +888,50 @@ export function BakingDay() {
 
           <section className="surface-workbench grid gap-3 p-4">
             <div>
+              <p className="flex items-center gap-2 text-xs font-medium">
+                <WifiIcon
+                  aria-hidden="true"
+                  className="size-3.5 text-acid-lime"
+                />
+                Prepare for Offline Use
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                Saves the calculator and Baking Day route files for this
+                browser. Your local session, notes, and timestamp-based timer
+                already stay on this device.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              className="min-h-11 justify-start rounded-md"
+              disabled={
+                !online ||
+                offlinePreparation === "working" ||
+                registrationStatus === "unsupported"
+              }
+              onClick={() => void prepareForOffline()}
+            >
+              <WifiIcon />
+              {offlinePreparation === "working"
+                ? "Preparing…"
+                : offlinePreparation === "ready"
+                  ? "Prepared for Offline Use"
+                  : "Prepare for Offline Use"}
+            </Button>
+            <p
+              role="status"
+              className="text-[11px] leading-relaxed text-muted-foreground"
+            >
+              {offlinePreparation === "ready"
+                ? "Ready. Browser and operating-system storage behavior varies; this is not indefinite storage, and timers or notifications cannot run after the device powers off."
+                : !online
+                  ? "Reconnect before preparing additional files. The open local session remains usable."
+                  : "Optional. No notification permission is requested."}
+            </p>
+          </section>
+
+          <section className="surface-workbench grid gap-3 p-4">
+            <div>
               <p className="text-xs font-medium">Kitchen display</p>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                 Wake Lock is requested only when you turn it on and may use more
@@ -981,7 +1045,7 @@ export function BakingDay() {
         {statusMessage}
       </div>
 
-      <footer className="border-t-[0.5px] border-graphite px-4 py-5 text-center text-[10px] text-muted-foreground">
+      <footer className="safe-bottom border-t-[0.5px] border-graphite px-4 py-5 text-center text-[10px] text-muted-foreground">
         {siteConfig.brand} · local session only · no closed-browser alarm
         guarantee
       </footer>

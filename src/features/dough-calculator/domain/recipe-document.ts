@@ -6,8 +6,7 @@ import {
   toDoughFormulaInput,
 } from "../schemas/calculator-schema";
 import type { CalculatorFormValues } from "../schemas/calculator-schema";
-import type { DoughFormulaInput } from "../types/dough";
-import { fermentationPlanInputSchema } from "./fermentation";
+import { fermentationPlanInputSchema } from "./fermentation-schema";
 import type { FermentationPlanInput } from "./fermentation";
 
 export const RECIPE_SCHEMA_VERSION = 2 as const;
@@ -250,60 +249,4 @@ export function createRecipeDocument({
     context,
     ...(fermentationPlan ? { fermentationPlan } : {}),
   });
-}
-
-/** Converts durable decimal engine input back to the percentage-based editor. */
-export function recipeInputToFormValues(
-  input: DoughFormulaInput
-): CalculatorFormValues {
-  const sizing = input.sizing;
-  const starter =
-    input.leavening.method === "commercial-yeast"
-      ? null
-      : input.leavening.starter;
-  const usesYeast = input.leavening.method !== "sourdough";
-  const selection = sizing.selection;
-  const area =
-    sizing.shape === "round"
-      ? Math.PI * Math.pow(sizing.diameterInches / 2, 2)
-      : sizing.usableInteriorLengthInches * sizing.usableInteriorWidthInches;
-  const loading =
-    selection.mode === "dough-loading"
-      ? selection.doughLoadingGramsPerSquareInch
-      : 2.8;
-
-  return {
-    shape: sizing.shape,
-    diameterInches: sizing.shape === "round" ? sizing.diameterInches : 14,
-    usableInteriorLengthInches:
-      sizing.shape === "rectangular" ? sizing.usableInteriorLengthInches : 18,
-    usableInteriorWidthInches:
-      sizing.shape === "rectangular" ? sizing.usableInteriorWidthInches : 13,
-    quantity: sizing.quantity,
-    sizingMode: selection.mode,
-    doughLoadingGramsPerSquareInch: loading,
-    manualDoughWeightGrams:
-      selection.mode === "manual-dough-weight"
-        ? selection.doughWeightPerUnitGrams
-        : Math.round(area * loading),
-    hydrationPercent: input.hydration * 100,
-    saltPercent: input.salt * 100,
-    fatType: input.fatType,
-    fatPercent: input.fat * 100,
-    sugarPercent: input.sugar * 100,
-    maltPercent: input.malt * 100,
-    leaveningMethod: input.leavening.method,
-    yeastType: usesYeast ? input.leavening.yeastType : "instant-dry",
-    yeastPercent: usesYeast ? input.leavening.yeastPercentage * 100 : 0.2,
-    starterPercent: starter ? starter.percentageOfTotalFlour * 100 : 20,
-    starterHydrationPercent: starter ? starter.hydration * 100 : 100,
-    flourBlend: input.flourBlend.map((item) => ({
-      ...item,
-      percentage: item.percentage * 100,
-    })),
-    customIngredients: input.customIngredients.map((item) => ({
-      ...item,
-      percentage: item.percentage * 100,
-    })),
-  };
 }

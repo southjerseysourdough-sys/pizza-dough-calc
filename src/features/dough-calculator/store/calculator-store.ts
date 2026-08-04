@@ -7,10 +7,11 @@ import { PAN_PROFILES } from "../presets/equipment";
 import { DEFAULT_PRESET, findPreset } from "../presets/formulas";
 import { presetToFormValues } from "../presets/preset-form-values";
 import type { CalculatorFormValues } from "../schemas/calculator-schema";
+import { type PizzaRecipeDocument } from "../domain/recipe-document";
 import {
   recipeInputToFormValues,
-  type PizzaRecipeDocument,
-} from "../domain/recipe-document";
+  validateCalculatorFormValues,
+} from "../utils/form-values";
 import type { FermentationPlanInput } from "../domain/fermentation";
 
 /**
@@ -177,6 +178,18 @@ export const useCalculatorStore = create<CalculatorState & CalculatorActions>()(
       // localStorage while the store is created would make the first client
       // render disagree with the server HTML.
       skipHydration: true,
+      merge: (persistedState, currentState) => {
+        if (!persistedState || typeof persistedState !== "object")
+          return currentState;
+        const persisted = persistedState as Partial<CalculatorState>;
+        if (
+          !persisted.values ||
+          typeof persisted.values !== "object" ||
+          validateCalculatorFormValues(persisted.values).length > 0
+        )
+          return currentState;
+        return { ...currentState, ...persisted, values: persisted.values };
+      },
     }
   )
 );

@@ -1,34 +1,73 @@
-import { z } from "zod";
-
 import type { RecipeContext } from "./recipe-document";
 import type { DoughFormulaInput } from "../types/dough";
 
-export const scheduleDirectionSchema = z.enum([
-  "forward-from-mix",
-  "backward-from-bake",
-]);
+export type ScheduleDirection = "forward-from-mix" | "backward-from-bake";
+export type FermentationStageType =
+  | "ingredient-prep"
+  | "mix"
+  | "rest"
+  | "folds"
+  | "room-bulk"
+  | "divide"
+  | "ball"
+  | "cold-ferment"
+  | "remove-from-cold"
+  | "warm-up"
+  | "pan"
+  | "final-proof"
+  | "shape"
+  | "top"
+  | "preheat"
+  | "bake"
+  | "custom";
+export type FermentationTemplateId =
+  | "new-york-cold"
+  | "new-york-same-day"
+  | "neapolitan-home"
+  | "sicilian-sheet-pan"
+  | "grandma"
+  | "sourdough-round"
+  | "sourdough-sheet-pan"
+  | "hybrid-cold"
+  | "custom";
+export type CustomFermentationStage = {
+  id: string;
+  label: string;
+  durationMinutes: number;
+  activeWork: boolean;
+  position: "after-mix" | "before-cold" | "before-bake";
+  notes?: string;
+};
+export type FermentationPlanInput = {
+  enabled: boolean;
+  templateId: FermentationTemplateId;
+  direction: ScheduleDirection;
+  anchorLocalDateTime: string;
+  timezone: string;
+  ingredientPrepMinutes: number;
+  mixMinutes: number;
+  initialRestMinutes: number;
+  foldCount: number;
+  foldIntervalMinutes: number;
+  roomBulkMinutes: number;
+  coldFermentMinutes: number;
+  warmUpMinutes: number;
+  finalProofMinutes: number;
+  preheatMinutes: number;
+  divideBallMinutes: number;
+  panMinutes: number;
+  shapeTopMinutes: number;
+  bakeMinutes: number;
+  includeLevainPrep: boolean;
+  levainPrepMinutes: number;
+  roomTemperatureF?: number;
+  refrigeratorTemperatureF?: number;
+  intendedDoughTemperatureF?: number;
+  notes?: string;
+  customStages: CustomFermentationStage[];
+};
 
-export const fermentationStageTypeSchema = z.enum([
-  "ingredient-prep",
-  "mix",
-  "rest",
-  "folds",
-  "room-bulk",
-  "divide",
-  "ball",
-  "cold-ferment",
-  "remove-from-cold",
-  "warm-up",
-  "pan",
-  "final-proof",
-  "shape",
-  "top",
-  "preheat",
-  "bake",
-  "custom",
-]);
-
-export const fermentationTemplateIdSchema = z.enum([
+const FERMENTATION_TEMPLATE_IDS: readonly FermentationTemplateId[] = [
   "new-york-cold",
   "new-york-same-day",
   "neapolitan-home",
@@ -38,90 +77,7 @@ export const fermentationTemplateIdSchema = z.enum([
   "sourdough-sheet-pan",
   "hybrid-cold",
   "custom",
-]);
-
-const durationMinutesSchema = z
-  .number()
-  .finite()
-  .int()
-  .min(0)
-  .max(60 * 24 * 30);
-
-export const customFermentationStageSchema = z.object({
-  id: z.string().trim().min(1).max(64),
-  label: z.string().trim().min(1).max(80),
-  durationMinutes: durationMinutesSchema,
-  activeWork: z.boolean().default(false),
-  position: z.enum(["after-mix", "before-cold", "before-bake"]),
-  notes: z.string().trim().max(500).optional(),
-});
-
-/**
- * Durable planner source. `anchorLocalDateTime` is a local wall-clock value in
- * `YYYY-MM-DDTHH:mm` form. It is interpreted in the viewing browser's local
- * timezone; `timezone` records where that intent was created and lets the UI
- * warn before the baker chooses whether to rebase the reference. No Date
- * objects or calculated stage timestamps are stored.
- */
-export const fermentationPlanInputSchema = z
-  .object({
-    enabled: z.boolean(),
-    templateId: fermentationTemplateIdSchema,
-    direction: scheduleDirectionSchema,
-    anchorLocalDateTime: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
-    timezone: z.string().trim().min(1).max(100),
-    ingredientPrepMinutes: durationMinutesSchema,
-    mixMinutes: durationMinutesSchema,
-    initialRestMinutes: durationMinutesSchema,
-    foldCount: z.number().finite().int().min(0).max(12),
-    foldIntervalMinutes: durationMinutesSchema,
-    roomBulkMinutes: durationMinutesSchema,
-    coldFermentMinutes: durationMinutesSchema,
-    warmUpMinutes: durationMinutesSchema,
-    finalProofMinutes: durationMinutesSchema,
-    preheatMinutes: durationMinutesSchema,
-    divideBallMinutes: durationMinutesSchema,
-    panMinutes: durationMinutesSchema,
-    shapeTopMinutes: durationMinutesSchema,
-    bakeMinutes: durationMinutesSchema,
-    includeLevainPrep: z.boolean(),
-    levainPrepMinutes: durationMinutesSchema,
-    roomTemperatureF: z.number().finite().min(35).max(120).optional(),
-    refrigeratorTemperatureF: z.number().finite().min(20).max(70).optional(),
-    intendedDoughTemperatureF: z.number().finite().min(35).max(120).optional(),
-    notes: z.string().trim().max(2000).optional(),
-    customStages: z.array(customFermentationStageSchema).max(20),
-  })
-  .superRefine((plan, context) => {
-    const identifiers = new Set<string>();
-    plan.customStages.forEach((stage, index) => {
-      if (identifiers.has(stage.id)) {
-        context.addIssue({
-          code: "custom",
-          path: ["customStages", index, "id"],
-          message: "Custom stage identifiers must be unique.",
-        });
-      }
-      identifiers.add(stage.id);
-    });
-    if (plan.foldCount > 0 && plan.foldIntervalMinutes === 0) {
-      context.addIssue({
-        code: "custom",
-        path: ["foldIntervalMinutes"],
-        message: "A fold interval is required when folds are planned.",
-      });
-    }
-  });
-
-export type ScheduleDirection = z.infer<typeof scheduleDirectionSchema>;
-export type FermentationStageType = z.infer<typeof fermentationStageTypeSchema>;
-export type FermentationTemplateId = z.infer<
-  typeof fermentationTemplateIdSchema
->;
-export type CustomFermentationStage = z.infer<
-  typeof customFermentationStageSchema
->;
-export type FermentationPlanInput = z.infer<typeof fermentationPlanInputSchema>;
+];
 
 export type FermentationStage = {
   id: string;
@@ -574,18 +530,120 @@ export function validateFermentationPlan(
   input: unknown
 ):
   { ok: true; value: FermentationPlanInput } | { ok: false; errors: string[] } {
-  const parsed = fermentationPlanInputSchema.safeParse(input);
-  if (!parsed.success)
+  if (!isFermentationPlanInput(input))
     return {
       ok: false,
-      errors: parsed.error.issues.map((issue) => issue.message),
+      errors: [
+        "The fermentation plan is incomplete or contains invalid values.",
+      ],
     };
-  if (parseLocalAnchor(parsed.data.anchorLocalDateTime) === null)
+  if (parseLocalAnchor(input.anchorLocalDateTime) === null)
     return {
       ok: false,
       errors: ["Choose a valid local anchor date and time."],
     };
-  return { ok: true, value: parsed.data };
+  return { ok: true, value: input };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isDuration(value: unknown): value is number {
+  return (
+    Number.isInteger(value) &&
+    Number.isFinite(value) &&
+    Number(value) >= 0 &&
+    Number(value) <= 60 * 24 * 30
+  );
+}
+
+function isOptionalTemperature(
+  value: unknown,
+  minimum: number,
+  maximum: number
+) {
+  return (
+    value === undefined ||
+    (typeof value === "number" &&
+      Number.isFinite(value) &&
+      value >= minimum &&
+      value <= maximum)
+  );
+}
+
+function isCustomStage(value: unknown): value is CustomFermentationStage {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.id === "string" &&
+    value.id.trim().length > 0 &&
+    value.id.length <= 64 &&
+    typeof value.label === "string" &&
+    value.label.trim().length > 0 &&
+    value.label.length <= 80 &&
+    isDuration(value.durationMinutes) &&
+    typeof value.activeWork === "boolean" &&
+    ["after-mix", "before-cold", "before-bake"].includes(
+      String(value.position)
+    ) &&
+    (value.notes === undefined ||
+      (typeof value.notes === "string" && value.notes.length <= 500))
+  );
+}
+
+function isFermentationPlanInput(
+  value: unknown
+): value is FermentationPlanInput {
+  if (!isRecord(value)) return false;
+  const durationKeys = [
+    "ingredientPrepMinutes",
+    "mixMinutes",
+    "initialRestMinutes",
+    "foldIntervalMinutes",
+    "roomBulkMinutes",
+    "coldFermentMinutes",
+    "warmUpMinutes",
+    "finalProofMinutes",
+    "preheatMinutes",
+    "divideBallMinutes",
+    "panMinutes",
+    "shapeTopMinutes",
+    "bakeMinutes",
+    "levainPrepMinutes",
+  ] as const;
+  if (!durationKeys.every((key) => isDuration(value[key]))) return false;
+  if (
+    typeof value.enabled !== "boolean" ||
+    !FERMENTATION_TEMPLATE_IDS.includes(
+      value.templateId as FermentationTemplateId
+    ) ||
+    !["forward-from-mix", "backward-from-bake"].includes(
+      String(value.direction)
+    ) ||
+    typeof value.anchorLocalDateTime !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value.anchorLocalDateTime) ||
+    typeof value.timezone !== "string" ||
+    value.timezone.trim().length === 0 ||
+    value.timezone.length > 100 ||
+    !Number.isInteger(value.foldCount) ||
+    Number(value.foldCount) < 0 ||
+    Number(value.foldCount) > 12 ||
+    typeof value.includeLevainPrep !== "boolean" ||
+    !isOptionalTemperature(value.roomTemperatureF, 35, 120) ||
+    !isOptionalTemperature(value.refrigeratorTemperatureF, 20, 70) ||
+    !isOptionalTemperature(value.intendedDoughTemperatureF, 35, 120) ||
+    (value.notes !== undefined &&
+      (typeof value.notes !== "string" || value.notes.length > 2000)) ||
+    !Array.isArray(value.customStages) ||
+    value.customStages.length > 20 ||
+    !value.customStages.every(isCustomStage)
+  )
+    return false;
+  const identifiers = new Set(value.customStages.map((stage) => stage.id));
+  return (
+    identifiers.size === value.customStages.length &&
+    !(Number(value.foldCount) > 0 && Number(value.foldIntervalMinutes) === 0)
+  );
 }
 
 function timelineAdvisories(

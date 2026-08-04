@@ -4,6 +4,7 @@ import { ThemeProvider } from "next-themes";
 import type { ReactNode } from "react";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { PwaProvider } from "@/features/launch/pwa/pwa-provider";
 
 /**
  * Single client boundary for every app-wide context provider.
@@ -26,7 +27,9 @@ export function Providers({ children }: { children: ReactNode }) {
       // the page when the theme flips.
       disableTransitionOnChange
     >
-      <TooltipProvider delay={200}>{children}</TooltipProvider>
+      <PwaProvider>
+        <TooltipProvider delay={200}>{children}</TooltipProvider>
+      </PwaProvider>
     </ThemeProvider>
   );
 }

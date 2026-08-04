@@ -2,6 +2,7 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { siteConfig } from "@/config/site";
 import { DoughCalculator } from "@/features/dough-calculator/components/dough-calculator";
 import { FormulaExplanation } from "@/features/dough-calculator/components/formula-explanation";
+import { createApplicationStructuredData } from "@/features/launch/domain/structured-data";
 
 /**
  * The calculator route.
@@ -12,8 +13,15 @@ import { FormulaExplanation } from "@/features/dough-calculator/components/formu
  * scroll past.
  */
 export default function Home() {
+  const structuredData = createApplicationStructuredData();
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+        }}
+      />
       <SiteHeader />
 
       <main className="flex-1 pt-4">
@@ -34,6 +42,24 @@ export default function Home() {
           <p className="text-xs text-muted-foreground/70">
             {siteConfig.productionUrl.replace("https://", "")}
           </p>
+          {siteConfig.feedbackUrl ? (
+            <a
+              href={siteConfig.feedbackUrl}
+              target={
+                siteConfig.feedbackUrl.startsWith("mailto:")
+                  ? undefined
+                  : "_blank"
+              }
+              rel={
+                siteConfig.feedbackUrl.startsWith("mailto:")
+                  ? undefined
+                  : "noreferrer"
+              }
+              className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Feedback
+            </a>
+          ) : null}
         </div>
       </footer>
     </>

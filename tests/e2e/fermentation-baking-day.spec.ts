@@ -102,14 +102,11 @@ test("reduced motion keeps the planner readable", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce", colorScheme: "dark" });
   await page.goto("/");
   await page.getByRole("button", { name: "Open fermentation planner" }).click();
-  if (
-    await page
-      .getByRole("button", { name: "Enable fermentation plan" })
-      .isVisible()
-  )
-    await page
-      .getByRole("button", { name: "Enable fermentation plan" })
-      .click();
+  const enablePlan = page.getByRole("button", {
+    name: "Enable fermentation plan",
+  });
+  await expect(enablePlan).toBeVisible();
+  await enablePlan.click();
   await expect(
     page.getByText("Weigh ingredients", { exact: true })
   ).toBeVisible();

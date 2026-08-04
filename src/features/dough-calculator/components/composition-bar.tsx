@@ -1,7 +1,5 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
-
 import { cn } from "@/lib/utils";
 import type { DoughFormulaResult, IngredientKind } from "../types/dough";
 import { formatIngredientGrams, formatPercentage } from "../utils/format";
@@ -33,7 +31,6 @@ const KIND_TONE: Record<IngredientKind, string> = {
 const MIN_SEGMENT_PERCENT = 0.8;
 
 export function CompositionBar({ result }: { result: DoughFormulaResult }) {
-  const prefersReducedMotion = useReducedMotion();
   const total = result.totalDoughWeightGrams;
 
   // The engine's ingredient list already counts the starter exactly once, so
@@ -61,19 +58,13 @@ export function CompositionBar({ result }: { result: DoughFormulaResult }) {
         className="surface-inset flex h-2 w-full gap-px overflow-hidden p-0"
       >
         {segments.map((segment, index) => (
-          <motion.div
+          <div
             key={segment.id}
             className={cn(
-              "h-full first:rounded-l-sm last:rounded-r-sm",
+              "h-full transition-[width] duration-300 ease-out first:rounded-l-sm last:rounded-r-sm motion-reduce:transition-none",
               KIND_TONE[segment.kind]
             )}
-            initial={false}
-            animate={{ width: `${(widths[index] / widthTotal) * 100}%` }}
-            transition={
-              prefersReducedMotion
-                ? { duration: 0 }
-                : { type: "spring", stiffness: 220, damping: 30 }
-            }
+            style={{ width: `${(widths[index] / widthTotal) * 100}%` }}
           />
         ))}
       </div>

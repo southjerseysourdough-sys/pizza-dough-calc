@@ -5,11 +5,11 @@ import { PlusIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { isReservedIngredientName } from "../schemas/calculator-schema";
 import { useCalculatorStore } from "../store/calculator-store";
 import type { DoughFormulaResult } from "../types/dough";
 import { createRowId } from "../utils/blend";
 import { formatIngredientGrams } from "../utils/format";
+import { isReservedIngredientName } from "../utils/form-values";
 
 /**
  * Custom ingredient editor.

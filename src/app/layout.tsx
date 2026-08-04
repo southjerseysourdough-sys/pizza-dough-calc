@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { Providers } from "@/components/providers";
@@ -32,6 +32,23 @@ export const metadata: Metadata = {
   authors: [{ name: siteConfig.brand }],
   creator: siteConfig.brand,
   publisher: siteConfig.brand,
+  category: "food and drink tools",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Dough Lab",
+    statusBarStyle: "black-translucent",
+  },
   alternates: {
     canonical: "/",
   },
@@ -48,6 +65,17 @@ export const metadata: Metadata = {
     title: siteConfig.seo.title,
     description: siteConfig.seo.description,
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f2f3f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#08090a" },
+  ],
+  colorScheme: "dark light",
 };
 
 export default function RootLayout({

@@ -1,10 +1,10 @@
 "use client";
 
 import { animate, createScope, svg, type Scope } from "animejs";
-import { useReducedMotion } from "motion/react";
 import { useEffect, useMemo, useRef } from "react";
 
 import { PerspectiveGrid } from "@/components/ui/perspective-grid";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
 import {
   createDoughFieldGeometry,
@@ -49,7 +49,7 @@ export function DoughField({
   const scopeRef = useRef<Scope | null>(null);
   const previousGeometry = useRef<DoughFieldGeometry | null>(null);
   const animations = useRef<Array<ReturnType<typeof animate>>>([]);
-  const prefersReducedMotion = useReducedMotion() ?? false;
+  const prefersReducedMotion = useReducedMotion();
   const geometry = useMemo(() => createDoughFieldGeometry(state), [state]);
   const isRound = state.shape === "round";
 

@@ -1,0 +1,50 @@
+# Production launch readiness report
+
+Date: 2026-08-03 (America/New_York)
+
+1. **Repository state before work.** `main` was clean at `55b73dd` (`Claude Work 05`), matching `origin/main`. No `AGENTS.md` or Sites hosting manifest was present.
+2. **Baseline results.** Formatting, ESLint, TypeScript, the production build, 267 Vitest tests in 21 files, and 10 Chromium E2E tests passed before launch work.
+3. **Dependencies added.** None.
+4. **Exact versions.** Existing runtime remains Next.js 16.2.12, React 19.2.4, Base UI 1.6.x, Zod 4.4.x, Zustand 5.0.x, Anime.js 4.5.0, React PDF 4.5.1, Playwright 1.62.1, and Vitest 4.1.10. `package.json` and `pnpm-lock.yaml` are unchanged.
+5. **Official sources consulted.** Next.js official [Progressive Web Apps guide](https://nextjs.org/docs/app/guides/progressive-web-apps), [manifest convention](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/manifest), and [metadata API](https://nextjs.org/docs/app/api-reference/functions/generate-metadata). The PWA guide supported a native worker and documents `updateViaCache: "none"`, worker headers, and controlled registration; Serwist was not needed.
+6. **Initial route bundle before and after.** `/` moved from 1,476,437 raw / 432,750 gzip / 369,962 Brotli bytes to 997,096 / 309,508 / 269,463: 32.5% raw and 28.5% gzip smaller, below the 350 KB gzip target.
+7. **Largest chunks before and after.** React PDF remains about 1.447 MB raw and lazy. The prior eager calculator/Base UI/Motion chunk (337,155 raw / 105,935 gzip) was split; the final five largest emitted chunks are React PDF 1,446,922/480,584, Zod 290,740/66,589, React DOM 232,792/72,523, framework 146,333/39,146, and application code 137,986/41,945 (raw/gzip bytes).
+8. **Client-boundary improvements.** The root layout remains server-rendered. Browser adapters are isolated in launch/PWA client modules; Zod, storage, share parsing, full recipe actions, and secondary workspaces no longer enter the initial calculator route.
+9. **Lazy-loaded features.** Full Recipe Actions, Saved Recipes, PDF, command palette, Help, Data Management, onboarding, and fermentation planner load only on use. React PDF and Baking Day route code are absent from initial `/` requests.
+10. **Service-worker architecture.** A dependency-free production-only worker at `public/sw.js` handles same-origin GET navigation/static requests. It does not intercept mutations, external resources, or development.
+11. **Cache strategies.** Core navigation uses network-first with prepared-route fallback. Exact Next static assets, manifest, and icons use cache-first. Preparation fetches `/` and `/bake`, extracts their exact script/style assets, and stores canonical route keys only.
+12. **Cache version.** `pdc-shell-v1`, under prefix `pdc-`; activation deletes obsolete app-prefixed versions.
+13. **Offline preparation behavior.** Baking Day’s optional action explains scope, prepares both core routes and assets, confirms completion, and states browser/OS storage limits. It requests no notification permission.
+14. **Offline limitations.** Preparation is not indefinite storage. Browser eviction and cleared site data remain possible; timers/notifications do not run after device power-off. Unprepared navigations receive a restrained offline fallback.
+15. **Install behavior.** `beforeinstallprompt` is deferred in memory, never invoked automatically, exposed only through explicit actions, and reports accepted, dismissed, or failed outcomes accessibly.
+16. **iOS behavior.** Eligible iPhone/iPad browsers receive manual Share → Add to Home Screen guidance instead of an incompatible prompt.
+17. **Onboarding behavior.** A non-blocking inline five-step Quick Start appears after the calculator is visible, supports Back/Skip/Finish, honors reduced motion, persists under `pdc:onboarding:v1`, and can be reopened from Help.
+18. **Command palette behavior.** Ctrl/Cmd+K and the visible touch button open a searchable Base UI combobox with 19 contextual actions. Hydration/quantity use focused validated subflows; all commands call existing stores/events and publish completion status.
+19. **Help architecture.** A lazy two-pane workspace contains 15 concise product-specific topics, including planning, Baking Day, local storage, offline limits, printing, privacy, and troubleshooting. Mobile uses a compact scrollable topic list.
+20. **Error boundaries.** Root, global-shell, and Baking Day boundaries preserve local-data wording and provide reload/return recovery. Root/Baking Day loading states, a 404, and an offline fallback were added.
+21. **Compatibility utilities.** One feature-detection boundary covers clipboard, File API, download, share, notifications, Wake Lock, service workers, standalone display, and iOS without assuming universal support.
+22. **Safe-area behavior.** Header, Baking Day header/dock, dialogs, and bottom surfaces use safe-area insets. Global horizontal overflow is constrained without hiding component defects.
+23. **SEO changes.** Title, description, root canonical, robots, sitemap, application name, theme colors, Apple web-app metadata, viewport-fit, and mobile color scheme are present. `/offline` is excluded from indexing.
+24. **Structured data.** Root JSON-LD emits honest `WebApplication`, `Organization`, and `WebSite` nodes. `SoftwareApplication` was not duplicated.
+25. **Open Graph behavior.** The generated general app image now uses the graphite/acid-lime visual system and backs both Open Graph and Twitter metadata. Shared query variants retain the root canonical.
+26. **Feedback configuration.** Feedback stays hidden unless `NEXT_PUBLIC_FEEDBACK_URL` is a valid HTTP(S) or `mailto:` URL. No destination was invented.
+27. **Privacy explanation.** UI states that recipes/sessions stay in this browser, JSON is processed locally, PDFs generate in-browser, share data is readable in the URL, cleared storage can remove data, exports are portable backups, and no account/cloud sync exists.
+28. **Archive format.** `archiveVersion: 1` contains an export timestamp and the existing versioned recipe collection. Exports are formatted JSON; imports retain the canonical recipe migration boundary.
+29. **Merge and replacement behavior.** Import validates first, previews recipe/collision counts, offers merge or explicit replacement, and renames colliding IDs as `-imported-N` rather than overwriting.
+30. **Data-reset behavior.** Recipes, active Baking Day session, active draft, onboarding, and app caches have separate controls and confirmations. Invalid archive/draft state does not erase the recipe library.
+31. **Update experience.** A waiting worker offers Later or Update now. Copy explains that recipes and timestamp timers persist; activation occurs only after confirmation and reloads on controller change.
+32. **Accessibility findings.** Keyboard/touch onboarding, explicit reopen focus, combobox semantics, visible focus, live offline/install/update status, labeled SVG alternatives, reduced motion, non-color-only status, and timestamp timers without per-second announcements are covered.
+33. **Mobile findings.** Calculator/onboarding/help were visually checked at 375 px. Baking Day’s current task, controls, timer, and next stage remain reachable at 375×812 and 812×375 with no horizontal overflow.
+34. **Browser compatibility findings.** Chromium production automation covers clipboard, files/downloads, PDF, print initiation, share URLs, service worker, install event, localStorage, dialogs, safe areas, and date/time controls. Safari/iOS, Firefox, and Edge remain real-device/manual release checks; every optional API has a guarded fallback.
+35. **Unit test count.** 180 domain tests in 14 files pass.
+36. **Component test count.** 107 jsdom component tests in 9 files pass. Combined Vitest result: 287/287 in 23 files.
+37. **Chromium E2E count.** 14/14 production E2E tests pass, covering legacy flows plus onboarding, command access, offline preparation/reload, timer/notes, archives, cache separation, mocked install, and landscape layout.
+38. **WebKit smoke result.** Attempted, but this workspace has only Chromium installed and the configuration has no WebKit project; the CLI reported `Project(s) "webkit" not found`. Per brief, that unavailable runtime did not block the phase.
+39. **Lint result.** `pnpm lint` passes with no rule suppression.
+40. **Typecheck result.** `pnpm typecheck` passes under the existing strict configuration; no `any` or TypeScript suppression was added.
+41. **Build result.** `pnpm build` passes; all 10 application/metadata routes are statically generated.
+42. **Offline verification result.** Production registration/headers, preparation, cache names, canonical route entries, payload-query exclusion, disconnected `/bake` reload, active timer, notes persistence, online return, and cache clearing without recipe deletion are verified in Chromium. Chromium logs its expected network-level `ERR_INTERNET_DISCONNECTED`; no application exception occurs.
+43. **Screenshot paths.** `docs/screenshots/launch-dark-1440.png`, `launch-light-1440.png`, `onboarding-dark-1440.png`, `onboarding-mobile-375.png`, `command-palette-dark.png`, `help-dark-1440.png`, `help-mobile-375.png`, `offline-baking-day-mobile.png`, `data-management-dark.png`, `error-state-dark.png`, and `baking-day-landscape.png`.
+44. **Remaining limitations.** First install/update behavior is ultimately browser-owned; cached/local data can be evicted; closed/powered-off browsers cannot execute timers or notifications; the first uncached visit needs a connection; and no cloud synchronization exists.
+45. **Decisions requiring manual review.** Confirm deployment values for `NEXT_PUBLIC_SITE_URL` and optional feedback URL, test HTTPS install/update on the final host, and complete Safari iOS/desktop, Firefox, Edge, standalone, 200% zoom, and assistive-technology smoke checks on real release devices.
+46. **Commit/deployment confirmation.** No commit, push, PR, deployment, or hosting mutation was performed.

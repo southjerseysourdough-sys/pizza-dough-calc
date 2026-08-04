@@ -6,13 +6,12 @@ import { calculateDough } from "../domain/calculate-dough";
 import { BAKING_STEEL_PLUS, STEEL_PROFILES } from "../presets/equipment";
 import { checkRoundSurfaceFit } from "../domain/warnings";
 import {
-  calculatorFormSchema,
   toDoughFormulaInput,
-} from "../schemas/calculator-schema";
+  validateCalculatorFormValues,
+} from "../utils/form-values";
 import type { DoughCalculation, ValidationIssue } from "../types/dough";
 import { useCalculatorStore } from "../store/calculator-store";
 import { useRecipeLibraryStore } from "../store/recipe-library-store";
-import { readRecipeFromSearchParams } from "../utils/recipe-share";
 
 /**
  * Derives the recipe from current inputs.
@@ -30,20 +29,9 @@ export function useDoughCalculation(): {
   const surfaceId = useCalculatorStore((state) => state.surfaceId);
 
   return useMemo(() => {
-    // Zod guards the shape of what the baker typed; the engine then guards the
-    // relationships between those values.
-    const parsed = calculatorFormSchema.safeParse(values);
+    const fieldErrors = validateCalculatorFormValues(values);
 
-    if (!parsed.success) {
-      const fieldErrors: ValidationIssue[] = parsed.error.issues.map(
-        (issue) => ({
-          code: "invalid-input",
-          severity: "error",
-          message: issue.message,
-          field: issue.path.join("."),
-        })
-      );
-
+    if (fieldErrors.length > 0) {
       return {
         calculation: { ok: false, issues: fieldErrors },
         fieldErrors,
@@ -51,15 +39,15 @@ export function useDoughCalculation(): {
       };
     }
 
-    const calculation = calculateDough(toDoughFormulaInput(parsed.data));
+    const calculation = calculateDough(toDoughFormulaInput(values));
 
     const profile =
       STEEL_PROFILES.find((candidate) => candidate.id === surfaceId) ??
       BAKING_STEEL_PLUS;
 
     const surfaceWarning =
-      parsed.data.shape === "round" && surfaceId !== "custom"
-        ? checkRoundSurfaceFit(parsed.data.diameterInches, profile)
+      values.shape === "round" && surfaceId !== "custom"
+        ? checkRoundSurfaceFit(values.diameterInches, profile)
         : null;
 
     return { calculation, fieldErrors: [], surfaceWarning };
@@ -77,29 +65,39 @@ export function useCalculatorPersistence(): void {
   useEffect(() => {
     let active = true;
     void (async () => {
-      await useCalculatorStore.persist.rehydrate();
+      try {
+        await useCalculatorStore.persist.rehydrate();
+      } catch {
+        useCalculatorStore.getState().reset();
+        useRecipeLibraryStore
+          .getState()
+          .setStatusMessage(
+            "The saved draft could not be read, so only the active draft was reset. Saved recipes were left unchanged."
+          );
+      }
       if (!active) return;
-      useRecipeLibraryStore.getState().hydrate();
-
-      const shared = readRecipeFromSearchParams(
-        new URLSearchParams(window.location.search)
-      );
-      if (!shared) return;
-      if (shared.ok) {
-        useCalculatorStore.getState().applyRecipeDocument(shared.value);
-        const library = useRecipeLibraryStore.getState();
-        library.setActiveRecipeId(null);
-        library.setWorkingName(shared.value.name);
-        library.setInvalidShare(false);
-        library.setStatusMessage(
-          "Shared recipe loaded. It has not been saved to My Recipes."
-        );
-      } else {
-        const library = useRecipeLibraryStore.getState();
-        library.setInvalidShare(true);
-        library.setStatusMessage(
-          `${shared.message} Your current recipe was not changed.`
-        );
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.has("r")) {
+        const { readRecipeFromSearchParams } =
+          await import("../utils/recipe-share");
+        if (!active) return;
+        const shared = readRecipeFromSearchParams(searchParams);
+        if (shared?.ok) {
+          useCalculatorStore.getState().applyRecipeDocument(shared.value);
+          const library = useRecipeLibraryStore.getState();
+          library.setActiveRecipeId(null);
+          library.setWorkingName(shared.value.name);
+          library.setInvalidShare(false);
+          library.setStatusMessage(
+            "Shared recipe loaded. It has not been saved to My Recipes."
+          );
+        } else if (shared) {
+          const library = useRecipeLibraryStore.getState();
+          library.setInvalidShare(true);
+          library.setStatusMessage(
+            `${shared.message} Your current recipe was not changed.`
+          );
+        }
       }
     })();
     return () => {

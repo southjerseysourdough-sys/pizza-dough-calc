@@ -1,9 +1,9 @@
 "use client";
 
 import { animate, createScope, stagger, svg, type Scope } from "animejs";
-import { useReducedMotion } from "motion/react";
 import { useEffect, useRef } from "react";
 
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
 import {
   polarArcPath,
@@ -21,7 +21,7 @@ export function FormulaSignature({
 }) {
   const rootRef = useRef<SVGSVGElement>(null);
   const scopeRef = useRef<Scope | null>(null);
-  const prefersReducedMotion = useReducedMotion() ?? false;
+  const prefersReducedMotion = useReducedMotion();
   const signatureKey = data.marks.join("-");
 
   useEffect(() => {

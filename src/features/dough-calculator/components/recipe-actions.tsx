@@ -11,8 +11,9 @@ import {
   SaveIcon,
   Share2Icon,
   UploadIcon,
+  ShieldCheckIcon,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
 import dynamic from "next/dynamic";
 
@@ -56,6 +57,11 @@ import {
 import { createRecipeShareUrl } from "../utils/recipe-share";
 import { startBakingDaySession } from "../utils/start-baking-day";
 import { RecipePrintSheet } from "./recipe-print-sheet";
+import {
+  RECIPE_ACTION_EVENT,
+  type RecipeAction,
+} from "@/features/launch/ui/recipe-action-events";
+import { dispatchLaunchAction } from "@/features/launch/ui/launch-events";
 
 const SavedRecipesDialog = dynamic(() =>
   import("./saved-recipes-dialog").then((module) => module.SavedRecipesDialog)
@@ -63,11 +69,15 @@ const SavedRecipesDialog = dynamic(() =>
 
 type FallbackContent = { title: string; label: string; value: string } | null;
 
-export function RecipeActions({ document }: { document: PizzaRecipeDocument }) {
+export function RecipeActions({
+  document,
+  initialAction,
+}: {
+  document: PizzaRecipeDocument;
+  initialAction?: RecipeAction;
+}) {
   const collection = useRecipeLibraryStore((state) => state.collection);
   const activeRecipeId = useRecipeLibraryStore((state) => state.activeRecipeId);
-  const saveRecipe = useRecipeLibraryStore((state) => state.save);
-  const updateRecipe = useRecipeLibraryStore((state) => state.update);
   const setActiveRecipeId = useRecipeLibraryStore(
     (state) => state.setActiveRecipeId
   );
@@ -81,8 +91,9 @@ export function RecipeActions({ document }: { document: PizzaRecipeDocument }) {
   const setFermentationWorkspaceOpen = useCalculatorStore(
     (state) => state.setFermentationWorkspaceOpen
   );
-  const [savedOpen, setSavedOpen] = useState(false);
-  const [nameOpen, setNameOpen] = useState(false);
+  const [savedOpen, setSavedOpen] = useState(initialAction === "saved");
+  const [nameOpen, setNameOpen] = useState(initialAction === "save");
+  const [menuOpen, setMenuOpen] = useState(initialAction === "menu");
   const [nameDraft, setNameDraft] = useState(document.name);
   const [fallback, setFallback] = useState<FallbackContent>(null);
   const [importDocument, setImportDocument] =
@@ -91,6 +102,7 @@ export function RecipeActions({ document }: { document: PizzaRecipeDocument }) {
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
+  const initialHandled = useRef(false);
 
   const activeRecipe =
     collection.recipes.find((recipe) => recipe.id === activeRecipeId) ?? null;
@@ -122,10 +134,18 @@ export function RecipeActions({ document }: { document: PizzaRecipeDocument }) {
     setNameOpen(true);
   };
 
-  const saveAsNew = () => {
+  const ensureLibraryHydrated = async () => {
+    if (!useRecipeLibraryStore.getState().hydrated)
+      await useRecipeLibraryStore.getState().hydrate();
+  };
+
+  const saveAsNew = async () => {
     const name = nameDraft.trim();
     if (!name || name.length > RECIPE_NAME_MAX_LENGTH) return;
-    const result = saveRecipe({ ...document, name });
+    await ensureLibraryHydrated();
+    const result = await useRecipeLibraryStore
+      .getState()
+      .save({ ...document, name });
     if (result.ok) {
       setWorkingName(name);
       setStatusMessage(`${name} saved to My Recipes.`);
@@ -133,9 +153,12 @@ export function RecipeActions({ document }: { document: PizzaRecipeDocument }) {
     } else setStatusMessage(result.error.message);
   };
 
-  const updateActive = () => {
+  const updateActive = async () => {
     if (!activeRecipeId) return openNameDialog();
-    const result = updateRecipe(activeRecipeId, document);
+    await ensureLibraryHydrated();
+    const result = await useRecipeLibraryStore
+      .getState()
+      .update(activeRecipeId, document);
     setStatusMessage(
       result.ok ? `${document.name} updated.` : result.error.message
     );
@@ -179,7 +202,9 @@ export function RecipeActions({ document }: { document: PizzaRecipeDocument }) {
       try {
         await navigator.share({
           title: document.name,
-          text: `${document.name} · South Jersey Sourdough`,
+          text: model
+            ? `${document.name} · ${(model.hydration * 100).toFixed(0)}% hydration · ${model.quantity} ${model.unitNoun}${model.quantity === 1 ? "" : "s"}`
+            : `${document.name} · South Jersey Sourdough`,
           url,
         });
         setStatusMessage("Recipe share sheet opened.");
@@ -302,21 +327,53 @@ export function RecipeActions({ document }: { document: PizzaRecipeDocument }) {
       })()
     : null;
 
+  useEffect(() => {
+    if (!useRecipeLibraryStore.getState().hydrated)
+      void useRecipeLibraryStore.getState().hydrate();
+    if (!initialHandled.current && initialAction) {
+      initialHandled.current = true;
+      queueMicrotask(() => {
+        if (initialAction === "share") void share();
+        if (initialAction === "copy") void copyRecipe();
+        if (initialAction === "print") void printRecipe();
+        if (initialAction === "pdf") void downloadPdf();
+      });
+    }
+    const onRecipeAction = (event: Event) => {
+      const action = (event as CustomEvent<RecipeAction>).detail;
+      if (action === "save") openNameDialog();
+      if (action === "saved") setSavedOpen(true);
+      if (action === "share") void share();
+      if (action === "copy") void copyRecipe();
+      if (action === "print") void printRecipe();
+      if (action === "pdf") void downloadPdf();
+    };
+    window.addEventListener(RECIPE_ACTION_EVENT, onRecipeAction);
+    return () =>
+      window.removeEventListener(RECIPE_ACTION_EVENT, onRecipeAction);
+  });
+
   return (
     <>
-      <div className="flex flex-wrap items-center gap-2" data-recipe-actions>
+      <div
+        className="flex flex-wrap items-center gap-2"
+        data-recipe-actions
+        data-onboarding-target="actions"
+      >
         <Button
           type="button"
           size="sm"
           className="rounded-md bg-acid-lime text-void hover:bg-acid-lime/85"
           onClick={
-            activeRecipeId && modified ? updateActive : () => openNameDialog()
+            activeRecipeId && modified
+              ? () => void updateActive()
+              : () => openNameDialog()
           }
         >
           <SaveIcon />
           {activeRecipeId && modified ? "Update Recipe" : "Save Recipe"}
         </Button>
-        <DropdownMenu>
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
           <DropdownMenuTrigger
             render={
               <Button
@@ -407,6 +464,10 @@ export function RecipeActions({ document }: { document: PizzaRecipeDocument }) {
                 <UploadIcon />
                 Import JSON
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => dispatchLaunchAction("help")}>
+                <ShieldCheckIcon />
+                Privacy and local data
+              </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -450,7 +511,7 @@ export function RecipeActions({ document }: { document: PizzaRecipeDocument }) {
               autoFocus
               onChange={(event) => setNameDraft(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key === "Enter") saveAsNew();
+                if (event.key === "Enter") void saveAsNew();
               }}
             />
           </label>
@@ -461,7 +522,10 @@ export function RecipeActions({ document }: { document: PizzaRecipeDocument }) {
             <Button variant="ghost" onClick={() => setNameOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={saveAsNew} disabled={!nameDraft.trim()}>
+            <Button
+              onClick={() => void saveAsNew()}
+              disabled={!nameDraft.trim()}
+            >
               Save to My Recipes
             </Button>
           </DialogFooter>

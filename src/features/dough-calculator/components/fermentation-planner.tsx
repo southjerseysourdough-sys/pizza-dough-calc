@@ -138,7 +138,9 @@ export function FermentationPlanner({
       {!plan?.enabled ? (
         <div className="grid place-items-start gap-3 p-5 sm:p-6">
           <p className="text-sm text-secondary-foreground">
-            Add an editable, style-aware starting schedule to this recipe.
+            Plan forward from mix time or backward from bake time. Backward
+            planning is the easiest starting point, and the first template is
+            matched to this recipe style.
           </p>
           <Button onClick={enable} className="rounded-md">
             <CalendarClockIcon />

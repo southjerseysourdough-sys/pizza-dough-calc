@@ -6,17 +6,7 @@ import type {
   LocalRecipeCollection,
   PizzaRecipeDocument,
 } from "../domain/recipe-document";
-import {
-  deleteRecipe,
-  duplicateRecipe,
-  emptyRecipeCollection,
-  readRecipeCollection,
-  renameRecipe,
-  saveNewRecipe,
-  updateRecipe,
-  writeRecipeCollection,
-  type RecipeStorageResult,
-} from "../utils/recipe-storage";
+import type { RecipeStorageResult } from "../utils/recipe-storage";
 
 type LibraryState = {
   collection: LocalRecipeCollection;
@@ -28,30 +18,27 @@ type LibraryState = {
   invalidShare: boolean;
 };
 
+type AsyncStorageResult = Promise<RecipeStorageResult<LocalRecipeCollection>>;
 type LibraryActions = {
-  hydrate: () => RecipeStorageResult<LocalRecipeCollection>;
-  save: (
-    document: PizzaRecipeDocument
-  ) => RecipeStorageResult<LocalRecipeCollection>;
-  update: (
-    id: string,
-    document: PizzaRecipeDocument
-  ) => RecipeStorageResult<LocalRecipeCollection>;
-  rename: (
-    id: string,
-    name: string
-  ) => RecipeStorageResult<LocalRecipeCollection>;
-  duplicate: (id: string) => RecipeStorageResult<LocalRecipeCollection>;
-  delete: (id: string) => RecipeStorageResult<LocalRecipeCollection>;
+  hydrate: () => AsyncStorageResult;
+  save: (document: PizzaRecipeDocument) => AsyncStorageResult;
+  update: (id: string, document: PizzaRecipeDocument) => AsyncStorageResult;
+  rename: (id: string, name: string) => AsyncStorageResult;
+  duplicate: (id: string) => AsyncStorageResult;
+  delete: (id: string) => AsyncStorageResult;
   setActiveRecipeId: (id: string | null) => void;
   setWorkingName: (name: string | null) => void;
   setStatusMessage: (message: string | null) => void;
   setInvalidShare: (invalid: boolean) => void;
 };
 
-function persist(
-  collection: LocalRecipeCollection
-): RecipeStorageResult<LocalRecipeCollection> {
+const emptyRecipeCollection = (): LocalRecipeCollection => ({
+  schemaVersion: 2,
+  recipes: [],
+});
+
+async function persist(collection: LocalRecipeCollection): AsyncStorageResult {
+  const { writeRecipeCollection } = await import("../utils/recipe-storage");
   return writeRecipeCollection(collection);
 }
 
@@ -65,7 +52,8 @@ export const useRecipeLibraryStore = create<LibraryState & LibraryActions>(
     statusMessage: null,
     invalidShare: false,
 
-    hydrate: () => {
+    hydrate: async () => {
+      const { readRecipeCollection } = await import("../utils/recipe-storage");
       const result = readRecipeCollection();
       if (result.ok)
         set({ collection: result.value, hydrated: true, storageMessage: null });
@@ -73,9 +61,10 @@ export const useRecipeLibraryStore = create<LibraryState & LibraryActions>(
       return result;
     },
 
-    save: (document) => {
+    save: async (document) => {
+      const { saveNewRecipe } = await import("../utils/recipe-storage");
       const collection = saveNewRecipe(get().collection, document);
-      const result = persist(collection);
+      const result = await persist(collection);
       if (result.ok)
         set({
           collection: result.value,
@@ -87,28 +76,31 @@ export const useRecipeLibraryStore = create<LibraryState & LibraryActions>(
       return result;
     },
 
-    update: (id, document) => {
+    update: async (id, document) => {
+      const { updateRecipe } = await import("../utils/recipe-storage");
       const changed = updateRecipe(get().collection, id, document);
       if (!changed.ok) return changed;
-      const result = persist(changed.value);
+      const result = await persist(changed.value);
       if (result.ok) set({ collection: result.value, storageMessage: null });
       else set({ storageMessage: result.error.message });
       return result;
     },
 
-    rename: (id, name) => {
+    rename: async (id, name) => {
+      const { renameRecipe } = await import("../utils/recipe-storage");
       const changed = renameRecipe(get().collection, id, name);
       if (!changed.ok) return changed;
-      const result = persist(changed.value);
+      const result = await persist(changed.value);
       if (result.ok) set({ collection: result.value, storageMessage: null });
       else set({ storageMessage: result.error.message });
       return result;
     },
 
-    duplicate: (id) => {
+    duplicate: async (id) => {
+      const { duplicateRecipe } = await import("../utils/recipe-storage");
       const changed = duplicateRecipe(get().collection, id);
       if (!changed.ok) return changed;
-      const result = persist(changed.value);
+      const result = await persist(changed.value);
       if (result.ok)
         set({
           collection: result.value,
@@ -120,10 +112,11 @@ export const useRecipeLibraryStore = create<LibraryState & LibraryActions>(
       return result;
     },
 
-    delete: (id) => {
+    delete: async (id) => {
+      const { deleteRecipe } = await import("../utils/recipe-storage");
       const changed = deleteRecipe(get().collection, id);
       if (!changed.ok) return changed;
-      const result = persist(changed.value);
+      const result = await persist(changed.value);
       if (result.ok)
         set({
           collection: result.value,

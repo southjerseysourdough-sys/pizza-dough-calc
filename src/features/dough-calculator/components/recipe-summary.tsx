@@ -1,11 +1,11 @@
 "use client";
 
 import { ChevronDownIcon } from "lucide-react";
-import { useReducedMotion } from "motion/react";
 import { useState } from "react";
 
 import BorderGlow from "@/components/effects/BorderGlow";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
 import { createFormulaSignatureData } from "../domain/formula-signature";
 import {
@@ -25,7 +25,7 @@ import { AnimatedNumber } from "./animated-number";
 import { CompositionBar } from "./composition-bar";
 import { IssueList } from "./issue-list";
 import { FormulaSignature } from "./formula-signature";
-import { RecipeActions } from "./recipe-actions";
+import { DeferredRecipeActions } from "./deferred-recipe-actions";
 import { ContextHelp } from "./context-help";
 
 /**
@@ -167,7 +167,7 @@ export function RecipeSummary({
                 className="size-16"
               />
             </div>
-            <RecipeActions document={document} />
+            <DeferredRecipeActions document={document} />
             {timeline?.ok ? (
               <div className="grid grid-cols-2 gap-x-3 gap-y-2 border-t-[0.5px] border-graphite pt-3 text-[10px]">
                 <ScheduleFact

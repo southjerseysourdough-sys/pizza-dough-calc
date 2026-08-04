@@ -1,10 +1,11 @@
 import { siteConfig } from "@/config/site";
 
 import { ThemeToggle } from "./theme-toggle";
+import { AppMenuButton } from "@/features/launch/ui/app-menu-button";
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b-[0.5px] border-graphite bg-background/92 backdrop-blur-md">
+    <header className="safe-header sticky top-0 z-40 border-b-[0.5px] border-graphite bg-background/92 backdrop-blur-md">
       <div className="mx-auto flex h-13 w-full max-w-[84rem] items-center justify-between gap-3 px-4 sm:px-6">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <span
@@ -30,6 +31,7 @@ export function SiteHeader() {
             Dough Lab / Live
           </span>
           <ThemeToggle />
+          <AppMenuButton />
         </div>
       </div>
     </header>
