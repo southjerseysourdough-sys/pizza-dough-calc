@@ -83,6 +83,8 @@ describe("SVG Dough Field", () => {
 
     expect(container.querySelector("[data-dough-field]")).not.toBeNull();
     expect(container.querySelector("[data-dough-field] svg")).not.toBeNull();
+    expect(container.querySelector("[data-pizza-crust]")).not.toBeNull();
+    expect(container.querySelector("[data-pizza-cheese]")).not.toBeNull();
     expect(container.querySelector("canvas")).toBeNull();
   });
 

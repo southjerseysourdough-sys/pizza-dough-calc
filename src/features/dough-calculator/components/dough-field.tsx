@@ -37,7 +37,7 @@ function MetaReadout({ label, value }: { label: string; value: string }) {
   );
 }
 
-/** Technical, illustrative geometry. Anime.js owns SVG d/opacity only; Motion does not animate this SVG. */
+/** Stylized pizza preview. Anime.js owns SVG path morphing; no canvas or WebGL is involved. */
 export function DoughField({
   state,
   className,
@@ -70,6 +70,12 @@ export function DoughField({
     if (!root || !scope) return;
     const active = root.querySelector<SVGPathElement>("[data-field-active]");
     const target = root.querySelector<SVGPathElement>("[data-field-target]");
+    const crust = root.querySelector<SVGPathElement>("[data-pizza-crust]");
+    const cheese = root.querySelector<SVGPathElement>("[data-pizza-cheese]");
+    const cheeseTarget = root.querySelector<SVGPathElement>(
+      "[data-pizza-cheese-target]"
+    );
+    const toppings = root.querySelectorAll<SVGElement>("[data-pizza-topping]");
     const contours = root.querySelectorAll<SVGPathElement>(
       "[data-field-contour]"
     );
@@ -77,7 +83,7 @@ export function DoughField({
     const dimensions = root.querySelectorAll<SVGElement>(
       "[data-field-dimension]"
     );
-    if (!active || !target) return;
+    if (!active || !target || !crust || !cheese || !cheeseTarget) return;
 
     animations.current.forEach((animation) => animation.cancel());
     animations.current = [];
@@ -88,11 +94,14 @@ export function DoughField({
       modeChanged
     );
     target.setAttribute("d", geometry.activePath);
+    cheeseTarget.setAttribute("d", geometry.contourPaths[1]);
 
     const supportsPathMeasurement = typeof active.getTotalLength === "function";
 
     if (prefersReducedMotion || previous === null || !supportsPathMeasurement) {
       active.setAttribute("d", geometry.activePath);
+      crust.setAttribute("d", geometry.activePath);
+      cheese.setAttribute("d", geometry.contourPaths[1]);
       contours.forEach((contour, index) =>
         contour.setAttribute(
           "d",
@@ -106,6 +115,8 @@ export function DoughField({
     }
 
     active.setAttribute("d", previous.activePath);
+    crust.setAttribute("d", previous.activePath);
+    cheese.setAttribute("d", previous.contourPaths[1]);
     scope.execute(() => {
       if (modeChanged)
         animations.current.push(
@@ -123,6 +134,30 @@ export function DoughField({
           ease: "inOut(3)",
         })
       );
+      animations.current.push(
+        animate(crust, {
+          d: svg.morphTo(target, 0.45),
+          duration: plan.morphMs,
+          ease: "inOut(3)",
+        })
+      );
+      animations.current.push(
+        animate(cheese, {
+          d: svg.morphTo(cheeseTarget, 0.45),
+          duration: plan.morphMs,
+          ease: "inOut(3)",
+        })
+      );
+      if (modeChanged)
+        animations.current.push(
+          animate(toppings, {
+            opacity: [0.25, 1],
+            scale: [0.94, 1],
+            duration: plan.settleMs,
+            delay: plan.labelDelayMs,
+            ease: "out(3)",
+          })
+        );
       animations.current.push(
         animate(dimensions, {
           opacity: [0.15, 1],
@@ -177,7 +212,7 @@ export function DoughField({
       <div className="flex items-center justify-between border-b-[0.5px] border-graphite px-3 py-2">
         <span className="flex items-center gap-2 font-mono text-[10px] tracking-[0.1em] text-secondary-foreground uppercase">
           <span className="size-1.5 rounded-full bg-acid-lime" />
-          Dough Field / {isRound ? "Radial" : "Planar"}
+          Pizza Preview / {isRound ? "Round" : "Pan"}
         </span>
         <span className="font-mono text-[10px] text-muted-foreground">
           ILLUSTRATIVE
@@ -191,6 +226,37 @@ export function DoughField({
           preserveAspectRatio="xMidYMid meet"
         >
           <defs>
+            <radialGradient id="pizza-crust" cx="42%" cy="34%" r="72%">
+              <stop offset="0" stopColor="#f1c879" />
+              <stop offset="0.58" stopColor="#d99a4d" />
+              <stop offset="0.86" stopColor="#aa612f" />
+              <stop offset="1" stopColor="#71401f" />
+            </radialGradient>
+            <radialGradient id="pizza-cheese" cx="42%" cy="38%" r="70%">
+              <stop offset="0" stopColor="#f7e1a3" />
+              <stop offset="0.55" stopColor="#efc66f" />
+              <stop offset="1" stopColor="#d9903d" />
+            </radialGradient>
+            <radialGradient id="pepperoni" cx="35%" cy="28%" r="70%">
+              <stop offset="0" stopColor="#d15b43" />
+              <stop offset="0.7" stopColor="#a43630" />
+              <stop offset="1" stopColor="#6f2525" />
+            </radialGradient>
+            <filter
+              id="pizza-shadow"
+              x="-25%"
+              y="-25%"
+              width="150%"
+              height="160%"
+            >
+              <feDropShadow
+                dx="0"
+                dy="7"
+                stdDeviation="7"
+                floodColor="#000"
+                floodOpacity="0.58"
+              />
+            </filter>
             <pattern
               id="fine-grid"
               width="16"
@@ -219,12 +285,17 @@ export function DoughField({
             strokeWidth="1"
           />
           <path data-field-target d={geometry.activePath} className="hidden" />
-          {geometry.contourPaths.slice(1).map((path, index) => (
+          <path
+            data-pizza-cheese-target
+            d={geometry.contourPaths[1]}
+            className="hidden"
+          />
+          {geometry.contourPaths.slice(2).map((path, index) => (
             <path
               key={index}
               data-field-contour
               d={path}
-              className="fill-none stroke-smoke/85"
+              className="fill-none stroke-smoke/55"
               strokeWidth="0.8"
               strokeDasharray={`${6 + index * 2} ${6 + index}`}
             />
@@ -243,16 +314,99 @@ export function DoughField({
             />
           ))}
           <path
+            data-pizza-crust
+            d={geometry.activePath}
+            fill="url(#pizza-crust)"
+            filter="url(#pizza-shadow)"
+          />
+          <path
+            data-pizza-cheese
+            d={geometry.contourPaths[1]}
+            fill="url(#pizza-cheese)"
+            stroke="#9d3a2b"
+            strokeWidth="9"
+            strokeLinejoin="round"
+          />
+          <g data-pizza-topping>
+            <path
+              d="M201 122c12-8 23-3 27 6-9 7-19 8-27-6Z"
+              fill="#f8e8b9"
+              opacity="0.7"
+            />
+            <path
+              d="M270 177c13-7 24-1 26 9-10 6-20 5-26-9Z"
+              fill="#fff0c7"
+              opacity="0.62"
+            />
+            <path
+              d="M218 198c9-8 20-7 25 1-6 9-16 11-25-1Z"
+              fill="#f9e5ad"
+              opacity="0.58"
+            />
+          </g>
+          <g data-pizza-topping>
+            {[
+              [205, 139, 12],
+              [257, 119, 11],
+              [292, 154, 12],
+              [253, 186, 11],
+              [198, 180, 10],
+              [234, 155, 11],
+            ].map(([cx, cy, radius]) => (
+              <g key={`${cx}-${cy}`}>
+                <circle
+                  cx={cx}
+                  cy={cy}
+                  r={radius}
+                  fill="url(#pepperoni)"
+                  stroke="#692323"
+                  strokeWidth="1.5"
+                />
+                <circle
+                  cx={cx - 3}
+                  cy={cy - 3}
+                  r="2"
+                  fill="#ef8060"
+                  opacity="0.7"
+                />
+              </g>
+            ))}
+          </g>
+          <g data-pizza-topping fill="#617b36" stroke="#314522" strokeWidth="1">
+            <ellipse
+              cx="218"
+              cy="108"
+              rx="5"
+              ry="11"
+              transform="rotate(-38 218 108)"
+            />
+            <ellipse
+              cx="278"
+              cy="198"
+              rx="5"
+              ry="11"
+              transform="rotate(42 278 198)"
+            />
+            <ellipse
+              cx="184"
+              cy="160"
+              rx="4.5"
+              ry="10"
+              transform="rotate(22 184 160)"
+            />
+          </g>
+          <g data-pizza-topping fill="#9e5e28" opacity="0.55">
+            <circle cx="224" cy="126" r="3.5" />
+            <circle cx="275" cy="142" r="4" />
+            <circle cx="221" cy="184" r="3" />
+            <circle cx="263" cy="166" r="2.5" />
+            <circle cx="190" cy="148" r="2.5" />
+          </g>
+          <path
             data-field-active
             d={geometry.activePath}
-            className="fill-none stroke-acid-lime"
-            strokeWidth="1.5"
-          />
-          <circle
-            cx={geometry.center.x}
-            cy={geometry.center.y}
-            r="3"
-            className="fill-acid-lime"
+            className="fill-none stroke-acid-lime/80"
+            strokeWidth="1.2"
           />
           {geometry.dimensionLines.map((line, index) => (
             <line
@@ -302,7 +456,7 @@ export function DoughField({
         <MetaReadout label="Count" value={`× ${state.quantity}`} />
       </div>
       <figcaption id="dough-field-caption" className="sr-only">
-        Dough Field technical visualization: {sizeLabel},{" "}
+        Pizza preview technical visualization: {sizeLabel},{" "}
         {state.hydrationPercent}% hydration,{" "}
         {formatDoughLoading(state.doughLoadingGramsPerSquareInch)},{" "}
         {formatTotalWeight(state.totalDoughWeightGrams)} total for{" "}

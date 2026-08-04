@@ -141,12 +141,17 @@ test("morphs the Dough Field from radial to planar geometry", async ({
   await page.goto("/");
   const field = page.locator("[data-dough-field]");
   const perimeter = field.locator("[data-field-active]");
+  const pizzaCrust = field.locator("[data-pizza-crust]");
   const radialPath = await perimeter.getAttribute("d");
+  const radialCrustPath = await pizzaCrust.getAttribute("d");
 
   await page.getByText("Sicilian or sheet pan", { exact: true }).click();
   await expect(field).toHaveAttribute("data-dough-field", "rectangular");
   await expect.poll(() => perimeter.getAttribute("d")).not.toBe(radialPath);
-  await expect(field).toContainText("Dough Field / Planar");
+  await expect
+    .poll(() => pizzaCrust.getAttribute("d"))
+    .not.toBe(radialCrustPath);
+  await expect(field).toContainText("Pizza Preview / Pan");
 });
 
 test("serves the manifest and supports dark, light, and reduced-motion paths", async ({
