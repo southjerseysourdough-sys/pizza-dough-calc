@@ -9,8 +9,9 @@ import { presetToFormValues } from "../presets/preset-form-values";
 import type { CalculatorFormValues } from "../schemas/calculator-schema";
 import {
   recipeInputToFormValues,
-  type PizzaRecipeDocumentV1,
+  type PizzaRecipeDocument,
 } from "../domain/recipe-document";
+import type { FermentationPlanInput } from "../domain/fermentation";
 
 /**
  * Calculator state.
@@ -35,6 +36,8 @@ type CalculatorState = {
   panInteriorMeasured: boolean;
   /** Progressive disclosure preference, persisted across visits. */
   showAdvanced: boolean;
+  fermentationPlan?: FermentationPlanInput;
+  fermentationWorkspaceOpen: boolean;
 };
 
 type CalculatorActions = {
@@ -45,7 +48,9 @@ type CalculatorActions = {
   setPanProfile: (panProfileId: string) => void;
   setPanInteriorMeasured: (measured: boolean) => void;
   setShowAdvanced: (showAdvanced: boolean) => void;
-  applyRecipeDocument: (document: PizzaRecipeDocumentV1) => void;
+  setFermentationPlan: (plan: FermentationPlanInput | undefined) => void;
+  setFermentationWorkspaceOpen: (open: boolean) => void;
+  applyRecipeDocument: (document: PizzaRecipeDocument) => void;
   reset: () => void;
 };
 
@@ -59,6 +64,8 @@ function initialState(): CalculatorState {
     panProfileId: DEFAULT_PRESET.panProfileId ?? "half-sheet-13x18",
     panInteriorMeasured: false,
     showAdvanced: false,
+    fermentationPlan: undefined,
+    fermentationWorkspaceOpen: false,
   };
 }
 
@@ -131,6 +138,11 @@ export const useCalculatorStore = create<CalculatorState & CalculatorActions>()(
 
       setShowAdvanced: (showAdvanced) => set({ showAdvanced }),
 
+      setFermentationPlan: (fermentationPlan) => set({ fermentationPlan }),
+
+      setFermentationWorkspaceOpen: (fermentationWorkspaceOpen) =>
+        set({ fermentationWorkspaceOpen }),
+
       applyRecipeDocument: (document) =>
         set({
           presetId: document.context.presetId,
@@ -142,6 +154,7 @@ export const useCalculatorStore = create<CalculatorState & CalculatorActions>()(
           surfaceId: document.context.surfaceId,
           panProfileId: document.context.panProfileId,
           panInteriorMeasured: document.context.panInteriorMeasured,
+          fermentationPlan: document.fermentationPlan,
         }),
 
       reset: () => set(initialState()),
@@ -158,6 +171,7 @@ export const useCalculatorStore = create<CalculatorState & CalculatorActions>()(
         panProfileId: state.panProfileId,
         panInteriorMeasured: state.panInteriorMeasured,
         showAdvanced: state.showAdvanced,
+        fermentationPlan: state.fermentationPlan,
       }),
       // Rehydration is deferred to an effect after mount. Reading
       // localStorage while the store is created would make the first client

@@ -7,8 +7,11 @@ import {
 } from "../schemas/calculator-schema";
 import type { CalculatorFormValues } from "../schemas/calculator-schema";
 import type { DoughFormulaInput } from "../types/dough";
+import { fermentationPlanInputSchema } from "./fermentation";
+import type { FermentationPlanInput } from "./fermentation";
 
-export const RECIPE_SCHEMA_VERSION = 1 as const;
+export const RECIPE_SCHEMA_VERSION = 2 as const;
+export const LEGACY_RECIPE_SCHEMA_VERSION = 1 as const;
 export const RECIPE_NAME_MAX_LENGTH = 80;
 
 export const recipeContextSchema = z.object({
@@ -19,10 +22,18 @@ export const recipeContextSchema = z.object({
 });
 
 export const pizzaRecipeDocumentV1Schema = z.object({
+  schemaVersion: z.literal(LEGACY_RECIPE_SCHEMA_VERSION),
+  name: z.string().trim().min(1).max(RECIPE_NAME_MAX_LENGTH),
+  calculatorInput: doughFormulaInputSchema,
+  context: recipeContextSchema,
+});
+
+export const pizzaRecipeDocumentV2Schema = z.object({
   schemaVersion: z.literal(RECIPE_SCHEMA_VERSION),
   name: z.string().trim().min(1).max(RECIPE_NAME_MAX_LENGTH),
   calculatorInput: doughFormulaInputSchema,
   context: recipeContextSchema,
+  fermentationPlan: fermentationPlanInputSchema.optional(),
 });
 
 export const localSavedPizzaRecipeV1Schema = z.object({
@@ -32,9 +43,16 @@ export const localSavedPizzaRecipeV1Schema = z.object({
   document: pizzaRecipeDocumentV1Schema,
 });
 
+export const localSavedPizzaRecipeV2Schema = z.object({
+  id: z.string().min(1),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+  document: pizzaRecipeDocumentV2Schema,
+});
+
 export const localRecipeCollectionV1Schema = z
   .object({
-    schemaVersion: z.literal(RECIPE_SCHEMA_VERSION),
+    schemaVersion: z.literal(LEGACY_RECIPE_SCHEMA_VERSION),
     recipes: z.array(localSavedPizzaRecipeV1Schema),
   })
   .superRefine((collection, context) => {
@@ -51,30 +69,77 @@ export const localRecipeCollectionV1Schema = z
     });
   });
 
+export const localRecipeCollectionV2Schema = z
+  .object({
+    schemaVersion: z.literal(RECIPE_SCHEMA_VERSION),
+    recipes: z.array(localSavedPizzaRecipeV2Schema),
+  })
+  .superRefine((collection, context) => {
+    const identifiers = new Set<string>();
+    collection.recipes.forEach((recipe, index) => {
+      if (identifiers.has(recipe.id)) {
+        context.addIssue({
+          code: "custom",
+          path: ["recipes", index, "id"],
+          message: "Saved recipe identifiers must be unique.",
+        });
+      }
+      identifiers.add(recipe.id);
+    });
+  });
+
 export const sharedPizzaRecipeV1Schema = z.object({
-  schemaVersion: z.literal(RECIPE_SCHEMA_VERSION),
+  schemaVersion: z.literal(LEGACY_RECIPE_SCHEMA_VERSION),
   document: pizzaRecipeDocumentV1Schema,
 });
 
-export const importedRecipeFileSchema = pizzaRecipeDocumentV1Schema;
+export const sharedPizzaRecipeV2Schema = z.object({
+  schemaVersion: z.literal(RECIPE_SCHEMA_VERSION),
+  document: pizzaRecipeDocumentV2Schema,
+});
+
+export const importedRecipeFileSchema = z.union([
+  pizzaRecipeDocumentV1Schema,
+  pizzaRecipeDocumentV2Schema,
+]);
 
 export type RecipeContext = z.infer<typeof recipeContextSchema>;
 export type PizzaRecipeDocumentV1 = z.infer<typeof pizzaRecipeDocumentV1Schema>;
+export type PizzaRecipeDocumentV2 = z.infer<typeof pizzaRecipeDocumentV2Schema>;
+export type PizzaRecipeDocument = PizzaRecipeDocumentV2;
 export type LocalSavedPizzaRecipeV1 = z.infer<
   typeof localSavedPizzaRecipeV1Schema
 >;
 export type LocalRecipeCollectionV1 = z.infer<
   typeof localRecipeCollectionV1Schema
 >;
+export type LocalSavedPizzaRecipeV2 = z.infer<
+  typeof localSavedPizzaRecipeV2Schema
+>;
+export type LocalRecipeCollectionV2 = z.infer<
+  typeof localRecipeCollectionV2Schema
+>;
+export type LocalRecipeCollection = LocalRecipeCollectionV2;
 export type SharedPizzaRecipeV1 = z.infer<typeof sharedPizzaRecipeV1Schema>;
+export type SharedPizzaRecipeV2 = z.infer<typeof sharedPizzaRecipeV2Schema>;
 
 export type RecipeMigrationResult<T> =
   { ok: true; value: T } | { ok: false; message: string };
 
 export function migrateRecipeDocument(
   input: unknown
-): RecipeMigrationResult<PizzaRecipeDocumentV1> {
+): RecipeMigrationResult<PizzaRecipeDocument> {
   const version = readSchemaVersion(input);
+  if (version === LEGACY_RECIPE_SCHEMA_VERSION) {
+    const parsed = pizzaRecipeDocumentV1Schema.safeParse(input);
+    return parsed.success
+      ? { ok: true, value: migrateRecipeDocumentV1ToV2(parsed.data) }
+      : {
+          ok: false,
+          message:
+            "The recipe document is incomplete or contains invalid values.",
+        };
+  }
   if (version !== RECIPE_SCHEMA_VERSION) {
     return {
       ok: false,
@@ -84,7 +149,7 @@ export function migrateRecipeDocument(
           : `Recipe schema version ${version} is not supported.`,
     };
   }
-  const parsed = pizzaRecipeDocumentV1Schema.safeParse(input);
+  const parsed = pizzaRecipeDocumentV2Schema.safeParse(input);
   return parsed.success
     ? { ok: true, value: parsed.data }
     : {
@@ -96,8 +161,17 @@ export function migrateRecipeDocument(
 
 export function migrateRecipeCollection(
   input: unknown
-): RecipeMigrationResult<LocalRecipeCollectionV1> {
+): RecipeMigrationResult<LocalRecipeCollection> {
   const version = readSchemaVersion(input);
+  if (version === LEGACY_RECIPE_SCHEMA_VERSION) {
+    const parsed = localRecipeCollectionV1Schema.safeParse(input);
+    return parsed.success
+      ? { ok: true, value: migrateRecipeCollectionV1ToV2(parsed.data) }
+      : {
+          ok: false,
+          message: "Saved recipe data is invalid and was left unchanged.",
+        };
+  }
   if (version !== RECIPE_SCHEMA_VERSION) {
     return {
       ok: false,
@@ -107,13 +181,37 @@ export function migrateRecipeCollection(
           : `Recipe collection version ${version} is not supported.`,
     };
   }
-  const parsed = localRecipeCollectionV1Schema.safeParse(input);
+  const parsed = localRecipeCollectionV2Schema.safeParse(input);
   return parsed.success
     ? { ok: true, value: parsed.data }
     : {
         ok: false,
         message: "Saved recipe data is invalid and was left unchanged.",
       };
+}
+
+/** V1 migration is deliberately lossless and never invents a schedule. */
+export function migrateRecipeDocumentV1ToV2(
+  document: PizzaRecipeDocumentV1
+): PizzaRecipeDocumentV2 {
+  return {
+    schemaVersion: RECIPE_SCHEMA_VERSION,
+    name: document.name,
+    calculatorInput: document.calculatorInput,
+    context: document.context,
+  };
+}
+
+export function migrateRecipeCollectionV1ToV2(
+  collection: LocalRecipeCollectionV1
+): LocalRecipeCollectionV2 {
+  return {
+    schemaVersion: RECIPE_SCHEMA_VERSION,
+    recipes: collection.recipes.map((recipe) => ({
+      ...recipe,
+      document: migrateRecipeDocumentV1ToV2(recipe.document),
+    })),
+  };
 }
 
 function readSchemaVersion(input: unknown): number | null {
@@ -131,11 +229,13 @@ export function createRecipeDocument({
   name,
   values,
   context,
+  fermentationPlan,
 }: {
   name: string;
   values: CalculatorFormValues;
   context: RecipeContext;
-}): RecipeMigrationResult<PizzaRecipeDocumentV1> {
+  fermentationPlan?: FermentationPlanInput;
+}): RecipeMigrationResult<PizzaRecipeDocument> {
   const parsedValues = calculatorFormSchema.safeParse(values);
   if (!parsedValues.success)
     return {
@@ -148,6 +248,7 @@ export function createRecipeDocument({
     name: name.trim(),
     calculatorInput: toDoughFormulaInput(parsedValues.data),
     context,
+    ...(fermentationPlan ? { fermentationPlan } : {}),
   });
 }
 

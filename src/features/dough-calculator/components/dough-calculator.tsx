@@ -1,7 +1,8 @@
 "use client";
 
-import { WrenchIcon } from "lucide-react";
+import { CalendarClockIcon, WrenchIcon } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import dynamic from "next/dynamic";
 
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,10 @@ import { IssueList } from "./issue-list";
 import { RecipeSummary } from "./recipe-summary";
 import { RecipeStatus } from "./recipe-status";
 import { SizeControls } from "./size-controls";
+
+const FermentationPlanner = dynamic(() =>
+  import("./fermentation-planner").then((module) => module.FermentationPlanner)
+);
 
 function Bench({
   title,
@@ -117,6 +122,15 @@ export function DoughCalculator() {
     (state) => state.panInteriorMeasured
   );
   const workingName = useRecipeLibraryStore((state) => state.workingName);
+  const fermentationPlan = useCalculatorStore(
+    (state) => state.fermentationPlan
+  );
+  const fermentationWorkspaceOpen = useCalculatorStore(
+    (state) => state.fermentationWorkspaceOpen
+  );
+  const setFermentationWorkspaceOpen = useCalculatorStore(
+    (state) => state.setFermentationWorkspaceOpen
+  );
 
   const { calculation, fieldErrors, surfaceWarning } = useDoughCalculation();
   const preset = findPreset(presetId);
@@ -138,6 +152,7 @@ export function DoughCalculator() {
       panProfileId,
       panInteriorMeasured,
     },
+    fermentationPlan,
   });
 
   return (
@@ -154,7 +169,7 @@ export function DoughCalculator() {
 
       <section
         aria-label="Current recipe command strip"
-        className="surface-workbench grid grid-cols-2 overflow-hidden sm:grid-cols-4 lg:grid-cols-8"
+        className="surface-workbench grid grid-cols-2 overflow-hidden sm:grid-cols-4 lg:grid-cols-9"
       >
         <CommandValue
           label="Profile"
@@ -175,6 +190,26 @@ export function DoughCalculator() {
           )}
         />
         <CommandValue label="Quantity" value={`× ${values.quantity}`} />
+        <button
+          type="button"
+          aria-label="Open fermentation planner"
+          className="flex min-h-13 min-w-0 items-center gap-2 border-l-[0.5px] border-graphite px-3 py-2.5 text-left hover:bg-inset focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none"
+          aria-expanded={fermentationWorkspaceOpen}
+          onClick={() => setFermentationWorkspaceOpen(true)}
+        >
+          <CalendarClockIcon
+            aria-hidden="true"
+            className="size-3.5 shrink-0 text-acid-lime"
+          />
+          <span className="min-w-0">
+            <span className="block font-mono text-[9px] tracking-[0.08em] text-muted-foreground uppercase">
+              Fermentation
+            </span>
+            <span className="block truncate text-xs text-secondary-foreground">
+              {fermentationPlan?.enabled ? "Planned" : "Set schedule"}
+            </span>
+          </span>
+        </button>
         <label className="flex min-w-0 cursor-pointer items-center justify-between gap-2 border-l-[0.5px] border-graphite px-3 py-2.5">
           <span className="flex min-w-0 flex-col gap-0.5">
             <span className="font-mono text-[9px] tracking-[0.08em] text-muted-foreground uppercase">
@@ -191,6 +226,10 @@ export function DoughCalculator() {
           />
         </label>
       </section>
+
+      {fermentationWorkspaceOpen && recipeDocument.ok ? (
+        <FermentationPlanner document={recipeDocument.value} />
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-12">
         <div className="order-2 flex flex-col gap-4 lg:order-1 lg:col-span-7 xl:col-span-8">
@@ -276,6 +315,21 @@ export function DoughCalculator() {
                   <DetailBlock title="Custom ingredients" code="FORMULA.06">
                     <CustomIngredientEditor result={result} />
                   </DetailBlock>
+                  <button
+                    type="button"
+                    className="col-span-full flex min-h-11 items-center justify-center gap-2 rounded-md border-[0.5px] border-graphite bg-inset px-3 text-sm text-secondary-foreground hover:text-foreground"
+                    onClick={() => {
+                      setFermentationWorkspaceOpen(true);
+                      requestAnimationFrame(() =>
+                        document
+                          .querySelector("[data-fermentation-planner]")
+                          ?.scrollIntoView({ block: "start" })
+                      );
+                    }}
+                  >
+                    <CalendarClockIcon className="size-4 text-acid-lime" />
+                    Open fermentation planner
+                  </button>
                 </div>
               </motion.div>
             ) : null}

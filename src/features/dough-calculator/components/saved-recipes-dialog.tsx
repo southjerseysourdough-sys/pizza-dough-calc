@@ -1,6 +1,12 @@
 "use client";
 
-import { CopyIcon, FolderOpenIcon, PencilIcon, Trash2Icon } from "lucide-react";
+import {
+  CopyIcon,
+  FolderOpenIcon,
+  PencilIcon,
+  PlayIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -14,14 +20,16 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   RECIPE_NAME_MAX_LENGTH,
-  type LocalSavedPizzaRecipeV1,
-  type PizzaRecipeDocumentV1,
+  type LocalSavedPizzaRecipeV2,
+  type PizzaRecipeDocument,
 } from "../domain/recipe-document";
 import { useCalculatorStore } from "../store/calculator-store";
 import { useRecipeLibraryStore } from "../store/recipe-library-store";
 import { areRecipeDocumentsEquivalent } from "../utils/recipe-normalization";
 import { createRecipePresentationModel } from "../utils/recipe-presentation";
 import { FormulaSignature } from "./formula-signature";
+import { formatTimelineTimestamp } from "../domain/fermentation";
+import { startBakingDaySession } from "../utils/start-baking-day";
 
 export function SavedRecipesDialog({
   open,
@@ -30,7 +38,7 @@ export function SavedRecipesDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  currentDocument: PizzaRecipeDocumentV1;
+  currentDocument: PizzaRecipeDocument;
 }) {
   const recipes = useRecipeLibraryStore((state) => state.collection.recipes);
   const activeRecipeId = useRecipeLibraryStore((state) => state.activeRecipeId);
@@ -58,7 +66,7 @@ export function SavedRecipesDialog({
     [recipes]
   );
 
-  const loadRecipe = (recipe: LocalSavedPizzaRecipeV1) => {
+  const loadRecipe = (recipe: LocalSavedPizzaRecipeV2) => {
     applyRecipeDocument(recipe.document);
     setActiveRecipeId(recipe.id);
     setWorkingName(recipe.document.name);
@@ -66,7 +74,7 @@ export function SavedRecipesDialog({
     onOpenChange(false);
   };
 
-  const confirmRename = (recipe: LocalSavedPizzaRecipeV1) => {
+  const confirmRename = (recipe: LocalSavedPizzaRecipeV2) => {
     const name = renameDraft.trim();
     if (!name || name.length > RECIPE_NAME_MAX_LENGTH) return;
     const result = renameRecipe(recipe.id, name);
@@ -77,14 +85,14 @@ export function SavedRecipesDialog({
     } else setStatusMessage(result.error.message);
   };
 
-  const duplicate = (recipe: LocalSavedPizzaRecipeV1) => {
+  const duplicate = (recipe: LocalSavedPizzaRecipeV2) => {
     const result = duplicateRecipe(recipe.id);
     setStatusMessage(
       result.ok ? `${recipe.document.name} duplicated.` : result.error.message
     );
   };
 
-  const remove = (recipe: LocalSavedPizzaRecipeV1) => {
+  const remove = (recipe: LocalSavedPizzaRecipeV2) => {
     const result = deleteRecipe(recipe.id);
     setStatusMessage(
       result.ok ? `${recipe.document.name} deleted.` : result.error.message
@@ -93,6 +101,17 @@ export function SavedRecipesDialog({
     requestAnimationFrame(() =>
       listRef.current?.querySelector<HTMLButtonElement>("button")?.focus()
     );
+  };
+
+  const startBakingDay = async (recipe: LocalSavedPizzaRecipeV2) => {
+    const result = await startBakingDaySession(recipe.document);
+    if (!result.ok) {
+      setStatusMessage(result.message);
+      loadRecipe(recipe);
+      useCalculatorStore.getState().setFermentationWorkspaceOpen(true);
+      return;
+    }
+    window.location.assign("/bake");
   };
 
   return (
@@ -189,6 +208,14 @@ export function SavedRecipesDialog({
                           <span>
                             {Math.round(model.totalDoughWeightGrams)} g
                           </span>
+                          {model.schedule ? (
+                            <span className="text-acid-lime">
+                              Bake{" "}
+                              {formatTimelineTimestamp(
+                                model.schedule.bakeTimestamp
+                              )}
+                            </span>
+                          ) : null}
                         </div>
                       </div>
                     </div>
@@ -211,6 +238,16 @@ export function SavedRecipesDialog({
                           <FolderOpenIcon />
                           Load
                         </Button>
+                        {model.schedule ? (
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            aria-label={`Start Baking Day for ${recipe.document.name}`}
+                            onClick={() => void startBakingDay(recipe)}
+                          >
+                            <PlayIcon />
+                          </Button>
+                        ) : null}
                         <Button
                           variant="ghost"
                           size="icon-xs"

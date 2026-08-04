@@ -46,7 +46,7 @@ describe("recipe actions and saved recipes", () => {
     await openActions(user);
     await user.click(screen.getByRole("menuitem", { name: /saved recipes/i }));
     expect(
-      screen.getByRole("heading", { name: /my recipes/i })
+      await screen.findByRole("heading", { name: /my recipes/i })
     ).toBeInTheDocument();
     expect(screen.getByText(/no saved recipes yet/i)).toBeInTheDocument();
   });
@@ -92,6 +92,7 @@ describe("recipe actions and saved recipes", () => {
     );
     await openActions(user);
     await user.click(screen.getByRole("menuitem", { name: /saved recipes/i }));
+    await screen.findByRole("heading", { name: /my recipes/i });
     await user.click(screen.getByRole("button", { name: /^load$/i }));
     expect(useCalculatorStore.getState().values.hydrationPercent).toBe(70);
     expect(useRecipeLibraryStore.getState().activeRecipeId).toBe("load-me");
@@ -110,6 +111,7 @@ describe("recipe actions and saved recipes", () => {
     const { user } = renderWithProviders(<RecipeActions document={document} />);
     await openActions(user);
     await user.click(screen.getByRole("menuitem", { name: /saved recipes/i }));
+    await screen.findByRole("heading", { name: /my recipes/i });
     await user.click(screen.getByRole("button", { name: /rename original/i }));
     const rename = screen.getByRole("textbox", { name: /rename original/i });
     await user.clear(rename);
@@ -261,6 +263,7 @@ describe("recipe actions and saved recipes", () => {
     );
     await openActions(user);
     await user.click(screen.getByRole("menuitem", { name: /saved recipes/i }));
+    await screen.findByRole("heading", { name: /my recipes/i });
     expect(screen.getByText(/storage is unavailable/i)).toBeInTheDocument();
   });
 });

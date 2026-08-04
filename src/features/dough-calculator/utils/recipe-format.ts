@@ -1,6 +1,10 @@
-import type { PizzaRecipeDocumentV1 } from "../domain/recipe-document";
+import type { PizzaRecipeDocument } from "../domain/recipe-document";
 import type { RecipePresentationModel } from "./recipe-presentation";
 import { formatIngredientGrams, formatPercentage } from "./format";
+import {
+  formatTimelineDuration,
+  formatTimelineTimestamp,
+} from "../domain/fermentation";
 
 export const IMPORT_FILE_SIZE_LIMIT_BYTES = 512 * 1024;
 
@@ -20,9 +24,7 @@ export function sanitizeRecipeFilename(
   return `${base}.${extension}`;
 }
 
-export function serializeRecipeDocument(
-  document: PizzaRecipeDocumentV1
-): string {
+export function serializeRecipeDocument(document: PizzaRecipeDocument): string {
   return `${JSON.stringify(document, null, 2)}\n`;
 }
 
@@ -93,6 +95,24 @@ export function formatRecipeAsPlainText(
       "",
       "NOTES",
       ...model.warnings.map((warning) => `- ${warning.message}`)
+    );
+  }
+  if (model.schedule) {
+    lines.push(
+      "",
+      "FERMENTATION PLAN",
+      `Timezone: ${model.schedule.timezone}`,
+      `Mix: ${formatTimelineTimestamp(model.schedule.mixTimestamp)}`,
+      `Bake: ${formatTimelineTimestamp(model.schedule.bakeTimestamp)}`,
+      `Total elapsed: ${formatTimelineDuration(model.schedule.totalDurationMinutes)}`,
+      `Cold ferment: ${formatTimelineDuration(model.schedule.coldFermentMinutes)}`,
+      ...model.schedule.stages.map(
+        (stage) =>
+          `${formatTimelineTimestamp(stage.startTimestamp)} — ${stage.label} (${formatTimelineDuration(stage.durationMinutes)})`
+      ),
+      ...(model.schedule.notes ? [`Plan notes: ${model.schedule.notes}`] : []),
+      "",
+      "Schedule times are planning guidance. Judge the dough, not merely the clock."
     );
   }
   lines.push("", model.productionUrl);

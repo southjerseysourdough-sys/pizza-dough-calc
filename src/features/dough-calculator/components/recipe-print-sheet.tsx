@@ -3,6 +3,10 @@ import { forwardRef } from "react";
 import { FormulaSignature } from "./formula-signature";
 import type { RecipePresentationModel } from "../utils/recipe-presentation";
 import { formatIngredientGrams, formatPercentage } from "../utils/format";
+import {
+  formatTimelineDuration,
+  formatTimelineTimestamp,
+} from "../domain/fermentation";
 
 export const RecipePrintSheet = forwardRef<
   HTMLDivElement,
@@ -89,6 +93,23 @@ export const RecipePrintSheet = forwardRef<
               <li key={warning.code}>{warning.message}</li>
             ))}
           </ul>
+        </PrintGroup>
+      ) : null}
+      {model.schedule ? (
+        <PrintGroup title={`Fermentation plan · ${model.schedule.timezone}`}>
+          {model.schedule.stages.map((stage) => (
+            <PrintRow
+              key={stage.id}
+              label={stage.label}
+              detail={formatTimelineDuration(stage.durationMinutes)}
+              value={formatTimelineTimestamp(stage.startTimestamp)}
+            />
+          ))}
+          {model.schedule.notes ? <p>{model.schedule.notes}</p> : null}
+          <p>
+            Planning guidance only. Dough condition, temperature, starter, and
+            equipment can change the pace.
+          </p>
         </PrintGroup>
       ) : null}
       <section className="print-notes">

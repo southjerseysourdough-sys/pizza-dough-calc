@@ -8,7 +8,12 @@ import BorderGlow from "@/components/effects/BorderGlow";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import { createFormulaSignatureData } from "../domain/formula-signature";
-import type { PizzaRecipeDocumentV1 } from "../domain/recipe-document";
+import {
+  calculateFermentationTimeline,
+  formatTimelineDuration,
+  formatTimelineTimestamp,
+} from "../domain/fermentation";
+import type { PizzaRecipeDocument } from "../domain/recipe-document";
 import type { DoughFormulaResult } from "../types/dough";
 import {
   formatArea,
@@ -96,13 +101,19 @@ export function RecipeSummary({
   /** The preset name, e.g. "New York on Baking Steel Plus". */
   styleLabel: string;
   surfaceLabel: string;
-  document: PizzaRecipeDocumentV1 | null;
+  document: PizzaRecipeDocument | null;
   className?: string;
 }) {
   const [showLedger, setShowLedger] = useState(false);
   const prefersReducedMotion = useReducedMotion();
   // Pointer-driven edge light is pointless on touch, where nothing hovers.
   const hasFinePointer = useMediaQuery("(hover: hover) and (pointer: fine)");
+  const timeline = document?.fermentationPlan?.enabled
+    ? calculateFermentationTimeline(
+        document.fermentationPlan,
+        document.calculatorInput
+      )
+    : null;
 
   const { sizing, starter } = result;
   const unitNoun = shape === "round" ? "pizza" : "pan";
@@ -157,6 +168,28 @@ export function RecipeSummary({
               />
             </div>
             <RecipeActions document={document} />
+            {timeline?.ok ? (
+              <div className="grid grid-cols-2 gap-x-3 gap-y-2 border-t-[0.5px] border-graphite pt-3 text-[10px]">
+                <ScheduleFact
+                  label="Mix"
+                  value={formatTimelineTimestamp(timeline.value.mixTimestamp)}
+                />
+                <ScheduleFact
+                  label="Bake"
+                  value={formatTimelineTimestamp(timeline.value.bakeTimestamp)}
+                />
+                <ScheduleFact
+                  label="Elapsed"
+                  value={formatTimelineDuration(
+                    timeline.value.totalDurationMinutes
+                  )}
+                />
+                <ScheduleFact
+                  label="Cold / timezone"
+                  value={`${formatTimelineDuration(document.fermentationPlan?.coldFermentMinutes ?? 0)} · ${document.fermentationPlan?.timezone}`}
+                />
+              </div>
+            ) : null}
           </div>
         ) : null}
         <div className="flex items-center justify-between gap-3">
@@ -337,6 +370,19 @@ export function RecipeSummary({
         </div>
       </section>
     </BorderGlow>
+  );
+}
+
+function ScheduleFact({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="min-w-0">
+      <span className="block font-mono text-[9px] tracking-[0.08em] text-muted-foreground uppercase">
+        {label}
+      </span>
+      <span className="tabular mt-0.5 block truncate text-secondary-foreground">
+        {value}
+      </span>
+    </span>
   );
 }
 

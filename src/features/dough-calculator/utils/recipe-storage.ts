@@ -1,13 +1,15 @@
 import {
   RECIPE_SCHEMA_VERSION,
-  localRecipeCollectionV1Schema,
+  localRecipeCollectionV2Schema,
   migrateRecipeCollection,
-  type LocalRecipeCollectionV1,
-  type LocalSavedPizzaRecipeV1,
-  type PizzaRecipeDocumentV1,
+  type LocalRecipeCollection,
+  type LocalSavedPizzaRecipeV2,
+  type PizzaRecipeDocument,
 } from "../domain/recipe-document";
 
-export const RECIPE_STORAGE_KEY = "sjs:pizza-dough-calculator:recipes:v1";
+export const RECIPE_STORAGE_KEY = "sjs:pizza-dough-calculator:recipes:v2";
+export const LEGACY_RECIPE_STORAGE_KEY =
+  "sjs:pizza-dough-calculator:recipes:v1";
 
 export type RecipeStorageErrorCode =
   "unavailable" | "invalid-data" | "quota-exceeded" | "missing-recipe";
@@ -18,7 +20,7 @@ export type RecipeStorageResult<T> =
       error: { code: RecipeStorageErrorCode; message: string; raw?: string };
     };
 
-export const emptyRecipeCollection = (): LocalRecipeCollectionV1 => ({
+export const emptyRecipeCollection = (): LocalRecipeCollection => ({
   schemaVersion: RECIPE_SCHEMA_VERSION,
   recipes: [],
 });
@@ -55,11 +57,13 @@ function storageOrError(storage?: Storage): RecipeStorageResult<Storage> {
 
 export function readRecipeCollection(
   storage?: Storage
-): RecipeStorageResult<LocalRecipeCollectionV1> {
+): RecipeStorageResult<LocalRecipeCollection> {
   const available = storageOrError(storage);
   if (!available.ok) return available;
   try {
-    const raw = available.value.getItem(RECIPE_STORAGE_KEY);
+    const currentRaw = available.value.getItem(RECIPE_STORAGE_KEY);
+    const raw =
+      currentRaw ?? available.value.getItem(LEGACY_RECIPE_STORAGE_KEY);
     if (raw === null) return { ok: true, value: emptyRecipeCollection() };
     let parsed: unknown;
     try {
@@ -76,12 +80,18 @@ export function readRecipeCollection(
       };
     }
     const migrated = migrateRecipeCollection(parsed);
-    return migrated.ok
-      ? { ok: true, value: migrated.value }
-      : {
-          ok: false,
-          error: { code: "invalid-data", message: migrated.message, raw },
-        };
+    if (migrated.ok) {
+      if (currentRaw === null && raw !== null)
+        available.value.setItem(
+          RECIPE_STORAGE_KEY,
+          JSON.stringify(migrated.value)
+        );
+      return { ok: true, value: migrated.value };
+    }
+    return {
+      ok: false,
+      error: { code: "invalid-data", message: migrated.message, raw },
+    };
   } catch {
     return {
       ok: false,
@@ -94,10 +104,10 @@ export function readRecipeCollection(
 }
 
 export function writeRecipeCollection(
-  collection: LocalRecipeCollectionV1,
+  collection: LocalRecipeCollection,
   storage?: Storage
-): RecipeStorageResult<LocalRecipeCollectionV1> {
-  const parsed = localRecipeCollectionV1Schema.safeParse(collection);
+): RecipeStorageResult<LocalRecipeCollection> {
+  const parsed = localRecipeCollectionV2Schema.safeParse(collection);
   if (!parsed.success)
     return {
       ok: false,
@@ -129,12 +139,12 @@ export function writeRecipeCollection(
 }
 
 export function saveNewRecipe(
-  collection: LocalRecipeCollectionV1,
-  document: PizzaRecipeDocumentV1,
+  collection: LocalRecipeCollection,
+  document: PizzaRecipeDocument,
   now = new Date().toISOString(),
   id = identifier()
-): LocalRecipeCollectionV1 {
-  const recipe: LocalSavedPizzaRecipeV1 = {
+): LocalRecipeCollection {
+  const recipe: LocalSavedPizzaRecipeV2 = {
     id,
     createdAt: now,
     updatedAt: now,
@@ -144,18 +154,18 @@ export function saveNewRecipe(
 }
 
 export function findRecipeById(
-  collection: LocalRecipeCollectionV1,
+  collection: LocalRecipeCollection,
   id: string
-): LocalSavedPizzaRecipeV1 | undefined {
+): LocalSavedPizzaRecipeV2 | undefined {
   return collection.recipes.find((recipe) => recipe.id === id);
 }
 
 export function updateRecipe(
-  collection: LocalRecipeCollectionV1,
+  collection: LocalRecipeCollection,
   id: string,
-  document: PizzaRecipeDocumentV1,
+  document: PizzaRecipeDocument,
   now = new Date().toISOString()
-): RecipeStorageResult<LocalRecipeCollectionV1> {
+): RecipeStorageResult<LocalRecipeCollection> {
   if (!findRecipeById(collection, id))
     return {
       ok: false,
@@ -176,11 +186,11 @@ export function updateRecipe(
 }
 
 export function renameRecipe(
-  collection: LocalRecipeCollectionV1,
+  collection: LocalRecipeCollection,
   id: string,
   name: string,
   now = new Date().toISOString()
-): RecipeStorageResult<LocalRecipeCollectionV1> {
+): RecipeStorageResult<LocalRecipeCollection> {
   const recipe = findRecipeById(collection, id);
   if (!recipe)
     return {
@@ -199,11 +209,11 @@ export function renameRecipe(
 }
 
 export function duplicateRecipe(
-  collection: LocalRecipeCollectionV1,
+  collection: LocalRecipeCollection,
   id: string,
   now = new Date().toISOString(),
   newId = identifier()
-): RecipeStorageResult<LocalRecipeCollectionV1> {
+): RecipeStorageResult<LocalRecipeCollection> {
   const recipe = findRecipeById(collection, id);
   if (!recipe)
     return {
@@ -225,9 +235,9 @@ export function duplicateRecipe(
 }
 
 export function deleteRecipe(
-  collection: LocalRecipeCollectionV1,
+  collection: LocalRecipeCollection,
   id: string
-): RecipeStorageResult<LocalRecipeCollectionV1> {
+): RecipeStorageResult<LocalRecipeCollection> {
   if (!findRecipeById(collection, id))
     return {
       ok: false,

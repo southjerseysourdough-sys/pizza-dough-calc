@@ -3,8 +3,8 @@
 import { create } from "zustand";
 
 import type {
-  LocalRecipeCollectionV1,
-  PizzaRecipeDocumentV1,
+  LocalRecipeCollection,
+  PizzaRecipeDocument,
 } from "../domain/recipe-document";
 import {
   deleteRecipe,
@@ -19,7 +19,7 @@ import {
 } from "../utils/recipe-storage";
 
 type LibraryState = {
-  collection: LocalRecipeCollectionV1;
+  collection: LocalRecipeCollection;
   activeRecipeId: string | null;
   hydrated: boolean;
   storageMessage: string | null;
@@ -29,20 +29,20 @@ type LibraryState = {
 };
 
 type LibraryActions = {
-  hydrate: () => RecipeStorageResult<LocalRecipeCollectionV1>;
+  hydrate: () => RecipeStorageResult<LocalRecipeCollection>;
   save: (
-    document: PizzaRecipeDocumentV1
-  ) => RecipeStorageResult<LocalRecipeCollectionV1>;
+    document: PizzaRecipeDocument
+  ) => RecipeStorageResult<LocalRecipeCollection>;
   update: (
     id: string,
-    document: PizzaRecipeDocumentV1
-  ) => RecipeStorageResult<LocalRecipeCollectionV1>;
+    document: PizzaRecipeDocument
+  ) => RecipeStorageResult<LocalRecipeCollection>;
   rename: (
     id: string,
     name: string
-  ) => RecipeStorageResult<LocalRecipeCollectionV1>;
-  duplicate: (id: string) => RecipeStorageResult<LocalRecipeCollectionV1>;
-  delete: (id: string) => RecipeStorageResult<LocalRecipeCollectionV1>;
+  ) => RecipeStorageResult<LocalRecipeCollection>;
+  duplicate: (id: string) => RecipeStorageResult<LocalRecipeCollection>;
+  delete: (id: string) => RecipeStorageResult<LocalRecipeCollection>;
   setActiveRecipeId: (id: string | null) => void;
   setWorkingName: (name: string | null) => void;
   setStatusMessage: (message: string | null) => void;
@@ -50,8 +50,8 @@ type LibraryActions = {
 };
 
 function persist(
-  collection: LocalRecipeCollectionV1
-): RecipeStorageResult<LocalRecipeCollectionV1> {
+  collection: LocalRecipeCollection
+): RecipeStorageResult<LocalRecipeCollection> {
   return writeRecipeCollection(collection);
 }
 

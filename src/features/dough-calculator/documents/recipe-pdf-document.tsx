@@ -11,6 +11,10 @@ import {
 import { polarArcPath } from "../domain/formula-signature";
 import type { RecipePresentationModel } from "../utils/recipe-presentation";
 import { formatIngredientGrams, formatPercentage } from "../utils/format";
+import {
+  formatTimelineDuration,
+  formatTimelineTimestamp,
+} from "../domain/fermentation";
 
 const colors = {
   ink: "#101112",
@@ -210,6 +214,24 @@ export function RecipePdfDocument({
               </Text>
             ))}
           </View>
+        ) : null}
+        {model.schedule ? (
+          <PdfGroup title={`Fermentation plan / ${model.schedule.timezone}`}>
+            {model.schedule.stages.map((stage) => (
+              <PdfRow
+                key={stage.id}
+                label={stage.label}
+                detail={formatTimelineDuration(stage.durationMinutes)}
+                value={formatTimelineTimestamp(stage.startTimestamp)}
+              />
+            ))}
+            {model.schedule.notes ? (
+              <Text style={styles.note}>{model.schedule.notes}</Text>
+            ) : null}
+            <Text style={styles.note}>
+              Planning guidance only. Judge the dough, not merely the clock.
+            </Text>
+          </PdfGroup>
         ) : null}
         <View style={styles.bakeNotes}>
           <Text style={styles.groupTitle}>Bake notes</Text>

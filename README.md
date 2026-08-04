@@ -10,6 +10,12 @@ as a selectable-text PDF. The application has no account or server recipe
 store: the local library stays in the current browser, while share links carry
 the recipe source inputs in the URL and are not permanent hosted records.
 
+An optional fermentation planner schedules that unchanged formula forward from
+a mix time or backward from a desired bake time. The route-split `/bake`
+Baking Day workspace then provides stage instructions, reload-safe timestamp
+timers, completion history, local notes, Wake Lock and best-effort browser
+notification enhancements, and deterministic text/JSON bake reports.
+
 ## Stack
 
 | Concern    | Choice                                                      |
@@ -56,12 +62,26 @@ The app runs at http://localhost:3000.
 
 - Draft inputs and saved recipes use browser `localStorage` with versioned,
   Zod-validated document envelopes.
+- Recipe documents are currently schema version 2. Version 1 saves, JSON files,
+  and shared URLs migrate through the same boundary without inventing a
+  fermentation plan or changing formula inputs.
+- Fermentation documents store source durations and a local wall-clock anchor
+  in `YYYY-MM-DDTHH:mm` form, never derived stage timestamps. The recorded IANA
+  timezone is a display/reference guard; opening in another timezone requires
+  an explicit keep-or-rebase choice.
+- Baking Day sessions use the
+  `sjs:pizza-dough-calculator:baking-session:v1` local namespace. Timers use
+  target timestamps as truth, so inactive tabs and reloads do not introduce
+  interval drift.
 - A valid shared `?r=` payload takes precedence over the local draft for that
   page load, but is never automatically added to My Recipes.
 - JSON import validates and previews the recipe before applying it; importing
   does not implicitly save it.
 - The web app manifest provides install metadata and icons. There is no service
   worker, so the project does not claim offline support.
+- Browser notifications have no service worker and therefore are not promised
+  after the browser closes. Fermentation schedules are planning guidance, not
+  scientifically precise fermentation predictions.
 
 ## Structure
 

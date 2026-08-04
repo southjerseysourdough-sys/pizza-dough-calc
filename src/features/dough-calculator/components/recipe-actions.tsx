@@ -1,17 +1,20 @@
 "use client";
 
 import {
+  CalendarClockIcon,
   DownloadIcon,
   FileDownIcon,
   FolderOpenIcon,
   MoreHorizontalIcon,
   PrinterIcon,
+  PlayIcon,
   SaveIcon,
   Share2Icon,
   UploadIcon,
 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
+import dynamic from "next/dynamic";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -35,7 +38,7 @@ import { Input } from "@/components/ui/input";
 import {
   RECIPE_NAME_MAX_LENGTH,
   migrateRecipeDocument,
-  type PizzaRecipeDocumentV1,
+  type PizzaRecipeDocument,
 } from "../domain/recipe-document";
 import { useCalculatorStore } from "../store/calculator-store";
 import { useRecipeLibraryStore } from "../store/recipe-library-store";
@@ -51,16 +54,16 @@ import {
   type RecipePresentationModel,
 } from "../utils/recipe-presentation";
 import { createRecipeShareUrl } from "../utils/recipe-share";
+import { startBakingDaySession } from "../utils/start-baking-day";
 import { RecipePrintSheet } from "./recipe-print-sheet";
-import { SavedRecipesDialog } from "./saved-recipes-dialog";
+
+const SavedRecipesDialog = dynamic(() =>
+  import("./saved-recipes-dialog").then((module) => module.SavedRecipesDialog)
+);
 
 type FallbackContent = { title: string; label: string; value: string } | null;
 
-export function RecipeActions({
-  document,
-}: {
-  document: PizzaRecipeDocumentV1;
-}) {
+export function RecipeActions({ document }: { document: PizzaRecipeDocument }) {
   const collection = useRecipeLibraryStore((state) => state.collection);
   const activeRecipeId = useRecipeLibraryStore((state) => state.activeRecipeId);
   const saveRecipe = useRecipeLibraryStore((state) => state.save);
@@ -75,12 +78,15 @@ export function RecipeActions({
   const applyRecipeDocument = useCalculatorStore(
     (state) => state.applyRecipeDocument
   );
+  const setFermentationWorkspaceOpen = useCalculatorStore(
+    (state) => state.setFermentationWorkspaceOpen
+  );
   const [savedOpen, setSavedOpen] = useState(false);
   const [nameOpen, setNameOpen] = useState(false);
   const [nameDraft, setNameDraft] = useState(document.name);
   const [fallback, setFallback] = useState<FallbackContent>(null);
   const [importDocument, setImportDocument] =
-    useState<PizzaRecipeDocumentV1 | null>(null);
+    useState<PizzaRecipeDocument | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -279,6 +285,16 @@ export function RecipeActions({
     setImportDocument(null);
   };
 
+  const startBakingDay = async () => {
+    const result = await startBakingDaySession(document);
+    if (!result.ok) {
+      setStatusMessage(result.message);
+      setFermentationWorkspaceOpen(true);
+      return;
+    }
+    window.location.assign("/bake");
+  };
+
   const importModel: RecipePresentationModel | null = importDocument
     ? (() => {
         const result = createRecipePresentationModel(importDocument);
@@ -318,6 +334,20 @@ export function RecipeActions({
             align="end"
             className="w-56 rounded-md border-[0.5px] border-graphite bg-obsidian shadow-none"
           >
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Execution</DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={() => setFermentationWorkspaceOpen(true)}
+              >
+                <CalendarClockIcon />
+                Fermentation planner
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => void startBakingDay()}>
+                <PlayIcon />
+                Start Baking Day
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuLabel>Recipe lifecycle</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => setSavedOpen(true)}>
@@ -396,11 +426,13 @@ export function RecipeActions({
         onChange={(event) => void importFile(event.target.files?.[0])}
       />
       {model ? <RecipePrintSheet ref={printRef} model={model} /> : null}
-      <SavedRecipesDialog
-        open={savedOpen}
-        onOpenChange={setSavedOpen}
-        currentDocument={document}
-      />
+      {savedOpen ? (
+        <SavedRecipesDialog
+          open={savedOpen}
+          onOpenChange={setSavedOpen}
+          currentDocument={document}
+        />
+      ) : null}
 
       <Dialog open={nameOpen} onOpenChange={setNameOpen}>
         <DialogContent className="rounded-xl border-[0.5px] border-graphite bg-carbon shadow-none">

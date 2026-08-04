@@ -4,7 +4,11 @@ import {
   createFormulaSignatureData,
   type FormulaSignatureData,
 } from "../domain/formula-signature";
-import type { PizzaRecipeDocumentV1 } from "../domain/recipe-document";
+import type { PizzaRecipeDocument } from "../domain/recipe-document";
+import {
+  calculateFermentationTimeline,
+  type FermentationStage,
+} from "../domain/fermentation";
 import { PAN_PROFILES, STEEL_PROFILES } from "../presets/equipment";
 import { findPreset } from "../presets/formulas";
 import type { IngredientKind, ValidationIssue } from "../types/dough";
@@ -49,13 +53,23 @@ export type RecipePresentationModel = {
   warnings: ValidationIssue[];
   signature: FormulaSignatureData;
   productionUrl: string;
+  schedule: null | {
+    timezone: string;
+    mixTimestamp: number;
+    bakeTimestamp: number;
+    totalDurationMinutes: number;
+    coldFermentMinutes: number;
+    stages: FermentationStage[];
+    advisories: string[];
+    notes?: string;
+  };
 };
 
 export type PresentationResult =
   { ok: true; value: RecipePresentationModel } | { ok: false; message: string };
 
 export function createRecipePresentationModel(
-  document: PizzaRecipeDocumentV1
+  document: PizzaRecipeDocument
 ): PresentationResult {
   const calculation = calculateDough(document.calculatorInput);
   if (!calculation.ok)
@@ -83,6 +97,12 @@ export function createRecipePresentationModel(
   const mainIngredients = result.ingredients.map((ingredient) => ({
     ...ingredient,
   }));
+  const timeline = document.fermentationPlan?.enabled
+    ? calculateFermentationTimeline(
+        document.fermentationPlan,
+        document.calculatorInput
+      )
+    : null;
 
   return {
     ok: true,
@@ -114,6 +134,21 @@ export function createRecipePresentationModel(
       warnings: [...result.warnings],
       signature: createFormulaSignatureData(document.calculatorInput),
       productionUrl: siteConfig.productionUrl,
+      schedule:
+        timeline?.ok && document.fermentationPlan
+          ? {
+              timezone: document.fermentationPlan.timezone,
+              mixTimestamp: timeline.value.mixTimestamp,
+              bakeTimestamp: timeline.value.bakeTimestamp,
+              totalDurationMinutes: timeline.value.totalDurationMinutes,
+              coldFermentMinutes: document.fermentationPlan.coldFermentMinutes,
+              stages: timeline.value.stages,
+              advisories: timeline.value.advisories.map(
+                (advisory) => advisory.message
+              ),
+              notes: document.fermentationPlan.notes,
+            }
+          : null,
     },
   };
 }

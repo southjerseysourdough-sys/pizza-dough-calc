@@ -15,6 +15,7 @@ import {
   presentationMassTotal,
 } from "../utils/recipe-presentation";
 import { makeRecipeDocument } from "./recipe-fixtures";
+import { createDefaultFermentationPlan } from "../domain/fermentation";
 
 describe("recipe presentation and identity", () => {
   it("creates deterministic formula signatures", () => {
@@ -108,5 +109,26 @@ describe("recipe presentation and identity", () => {
     const first = createRecipePresentationModel(makeRecipeDocument());
     const second = createRecipePresentationModel(makeRecipeDocument());
     expect(first).toEqual(second);
+  });
+  it("includes a fermentation schedule in presentation and plain text", () => {
+    const base = makeRecipeDocument();
+    const document = {
+      ...base,
+      fermentationPlan: {
+        ...createDefaultFermentationPlan(
+          base.calculatorInput,
+          base.context,
+          new Date(2026, 7, 3)
+        ),
+        anchorLocalDateTime: "2026-08-06T18:00",
+      },
+    };
+    const result = createRecipePresentationModel(document);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.schedule?.stages.length).toBeGreaterThan(0);
+    expect(formatRecipeAsPlainText(result.value)).toMatch(
+      /FERMENTATION PLAN[\s\S]*Judge the dough/i
+    );
   });
 });

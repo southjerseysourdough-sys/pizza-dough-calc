@@ -6,7 +6,10 @@ import {
   readRecipeFromSearchParams,
   serializeSharedRecipe,
 } from "../utils/recipe-share";
-import { makeRecipeDocument } from "./recipe-fixtures";
+import {
+  makeLegacyRecipeDocument,
+  makeRecipeDocument,
+} from "./recipe-fixtures";
 
 describe("shared recipe URLs", () => {
   it("round trips Unicode names", () => {
@@ -23,6 +26,22 @@ describe("shared recipe URLs", () => {
     expect(serializeSharedRecipe(document)).toBe(
       serializeSharedRecipe(document)
     );
+  });
+  it("loads a version one shared payload without inventing a schedule", () => {
+    const payload = Buffer.from(
+      JSON.stringify({
+        schemaVersion: 1,
+        document: makeLegacyRecipeDocument(),
+      })
+    )
+      .toString("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/g, "");
+    const decoded = deserializeSharedRecipe(payload);
+    expect(decoded.ok).toBe(true);
+    expect(decoded.ok && decoded.value.schemaVersion).toBe(2);
+    expect(decoded.ok && decoded.value.fermentationPlan).toBeUndefined();
   });
   it("rejects invalid Base64", () =>
     expect(deserializeSharedRecipe("not+url/safe=").ok).toBe(false));

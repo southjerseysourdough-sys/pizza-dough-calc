@@ -6,6 +6,7 @@ import {
   emptyRecipeCollection,
   findRecipeById,
   readRecipeCollection,
+  LEGACY_RECIPE_STORAGE_KEY,
   renameRecipe,
   RECIPE_STORAGE_KEY,
   saveNewRecipe,
@@ -13,6 +14,7 @@ import {
   writeRecipeCollection,
 } from "../utils/recipe-storage";
 import { makeRecipeDocument } from "./recipe-fixtures";
+import { makeLegacyRecipeDocument } from "./recipe-fixtures";
 
 class MemoryStorage implements Storage {
   private values = new Map<string, string>();
@@ -53,6 +55,29 @@ describe("local recipe storage", () => {
     expect(writeRecipeCollection(collection, storage).ok).toBe(true);
     const read = readRecipeCollection(storage);
     expect(read.ok && read.value.recipes).toHaveLength(1);
+  });
+  it("migrates a version one collection without inventing a plan", () => {
+    const storage = new MemoryStorage();
+    storage.setItem(
+      LEGACY_RECIPE_STORAGE_KEY,
+      JSON.stringify({
+        schemaVersion: 1,
+        recipes: [
+          {
+            id: "legacy",
+            createdAt: "2026-08-03T12:00:00.000Z",
+            updatedAt: "2026-08-03T12:00:00.000Z",
+            document: makeLegacyRecipeDocument(),
+          },
+        ],
+      })
+    );
+    const result = readRecipeCollection(storage);
+    expect(result.ok && result.value.schemaVersion).toBe(2);
+    expect(
+      result.ok && result.value.recipes[0].document.fermentationPlan
+    ).toBeUndefined();
+    expect(storage.getItem(RECIPE_STORAGE_KEY)).not.toBeNull();
   });
   it("saves a new recipe", () =>
     expect(

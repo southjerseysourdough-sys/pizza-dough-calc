@@ -1,9 +1,10 @@
 import { siteConfig } from "@/config/site";
 import {
+  RECIPE_SCHEMA_VERSION,
   migrateRecipeDocument,
-  sharedPizzaRecipeV1Schema,
-  type PizzaRecipeDocumentV1,
-  type SharedPizzaRecipeV1,
+  sharedPizzaRecipeV2Schema,
+  type PizzaRecipeDocument,
+  type SharedPizzaRecipeV2,
 } from "../domain/recipe-document";
 
 export type ShareResult<T> =
@@ -26,8 +27,11 @@ function base64ToBytes(value: string): Uint8Array {
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
 
-export function serializeSharedRecipe(document: PizzaRecipeDocumentV1): string {
-  const payload: SharedPizzaRecipeV1 = { schemaVersion: 1, document };
+export function serializeSharedRecipe(document: PizzaRecipeDocument): string {
+  const payload: SharedPizzaRecipeV2 = {
+    schemaVersion: RECIPE_SCHEMA_VERSION,
+    document,
+  };
   const json = JSON.stringify(payload);
   return bytesToBase64(new TextEncoder().encode(json))
     .replace(/\+/g, "-")
@@ -37,7 +41,7 @@ export function serializeSharedRecipe(document: PizzaRecipeDocumentV1): string {
 
 export function deserializeSharedRecipe(
   value: string
-): ShareResult<PizzaRecipeDocumentV1> {
+): ShareResult<PizzaRecipeDocument> {
   try {
     if (!/^[A-Za-z0-9_-]+$/.test(value))
       return { ok: false, message: "The shared recipe link is malformed." };
@@ -47,20 +51,40 @@ export function deserializeSharedRecipe(
       base64ToBytes(padded)
     );
     const parsedJson: unknown = JSON.parse(json);
-    const payload = sharedPizzaRecipeV1Schema.safeParse(parsedJson);
-    if (!payload.success)
+    if (
+      typeof parsedJson !== "object" ||
+      parsedJson === null ||
+      !("schemaVersion" in parsedJson) ||
+      !("document" in parsedJson)
+    )
       return {
         ok: false,
         message: "The shared recipe is invalid or uses an unsupported version.",
       };
-    return migrateRecipeDocument(payload.data.document);
+    const wrapperVersion = parsedJson.schemaVersion;
+    if (wrapperVersion !== 1 && wrapperVersion !== RECIPE_SCHEMA_VERSION)
+      return {
+        ok: false,
+        message: "The shared recipe is invalid or uses an unsupported version.",
+      };
+    if (wrapperVersion === RECIPE_SCHEMA_VERSION) {
+      const payload = sharedPizzaRecipeV2Schema.safeParse(parsedJson);
+      if (!payload.success)
+        return {
+          ok: false,
+          message:
+            "The shared recipe is invalid or uses an unsupported version.",
+        };
+      return migrateRecipeDocument(payload.data.document);
+    }
+    return migrateRecipeDocument(parsedJson.document);
   } catch {
     return { ok: false, message: "The shared recipe could not be decoded." };
   }
 }
 
 export function createRecipeShareUrl(
-  document: PizzaRecipeDocumentV1,
+  document: PizzaRecipeDocument,
   origin?: string
 ): string {
   const base =
@@ -75,7 +99,7 @@ export function createRecipeShareUrl(
 
 export function readRecipeFromSearchParams(
   searchParams: URLSearchParams
-): ShareResult<PizzaRecipeDocumentV1> | null {
+): ShareResult<PizzaRecipeDocument> | null {
   const value = searchParams.get("r");
   return value ? deserializeSharedRecipe(value) : null;
 }

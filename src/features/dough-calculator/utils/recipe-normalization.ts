@@ -1,4 +1,4 @@
-import type { PizzaRecipeDocumentV1 } from "../domain/recipe-document";
+import type { PizzaRecipeDocument } from "../domain/recipe-document";
 import type { DoughFormulaInput } from "../types/dough";
 
 function stableNumber(value: number): number {
@@ -100,19 +100,18 @@ export function normalizeRecipeInput(input: DoughFormulaInput): unknown {
   };
 }
 
-export function normalizeRecipeDocument(
-  document: PizzaRecipeDocumentV1
-): string {
+export function normalizeRecipeDocument(document: PizzaRecipeDocument): string {
   return JSON.stringify({
     name: document.name.trim(),
     calculatorInput: normalizeRecipeInput(document.calculatorInput),
     context: document.context,
+    fermentationPlan: document.fermentationPlan,
   });
 }
 
 export function areRecipeDocumentsEquivalent(
-  left: PizzaRecipeDocumentV1,
-  right: PizzaRecipeDocumentV1
+  left: PizzaRecipeDocument,
+  right: PizzaRecipeDocument
 ): boolean {
   return normalizeRecipeDocument(left) === normalizeRecipeDocument(right);
 }
