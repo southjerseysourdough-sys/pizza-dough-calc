@@ -109,8 +109,12 @@ export function DoughStage({
           </a>
         </div>
 
-        <div className="p-3 sm:p-4">
-          <DoughField state={fieldState} className="lg:h-full" />
+        {/*
+         * Centred rather than stretched: the preview holds the sprite's own
+         * 16:9 ratio, so forcing it to the column height would only crop it.
+         */}
+        <div className="flex items-center p-3 sm:p-4">
+          <DoughField state={fieldState} />
         </div>
       </div>
     </section>

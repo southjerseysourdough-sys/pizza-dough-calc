@@ -122,7 +122,7 @@ export function DoughField({
       data-total={state.totalDoughWeightGrams}
       data-quantity={state.quantity}
       className={cn(
-        "relative isolate flex min-h-52 w-full min-w-0 flex-col overflow-hidden rounded-xl border-[0.5px] border-graphite bg-stage sm:min-h-72",
+        "relative isolate flex w-full min-w-0 flex-col overflow-hidden rounded-xl border-[0.5px] border-graphite bg-stage",
         className
       )}
     >
@@ -135,13 +135,22 @@ export function DoughField({
           REFERENCE VISUAL
         </span>
       </div>
-      <div className="relative min-h-40 flex-1 overflow-hidden sm:min-h-56">
+      {/*
+       * The sprite frames are 16:9 (2880 x 1350 over a 6 x 5 grid), so the
+       * preview carries that ratio itself rather than stretching to fill
+       * whatever height the surrounding layout happens to have. A wide, short
+       * area would otherwise scale the frame to the width and clip the top
+       * and bottom of the pizza off.
+       */}
+      <div className="relative aspect-video w-full overflow-hidden">
         <div className="absolute inset-0 grid place-items-center overflow-hidden">
           <div
             ref={visualRef}
             aria-hidden="true"
             data-pizza-sequence
             data-pizza-frame={initialPosition.frame}
+            // 12% oversized against a box of the same ratio, so the bleed is
+            // an even 6% on every edge instead of a crop on two of them.
             className="aspect-video w-[112%] shrink-0 bg-no-repeat"
             style={{
               backgroundImage: `url(${SPRITE_URL})`,
@@ -176,7 +185,9 @@ export function DoughField({
           </text>
         </svg>
       </div>
-      <div className="grid grid-cols-4 gap-3 border-t-[0.5px] border-graphite px-3 py-2.5">
+      {/* Two columns on a phone: four leaves "Hydration" and "Loading"
+          overlapping and truncates the loading figure to "2.39 g/…". */}
+      <div className="grid grid-cols-2 gap-x-3 gap-y-2 border-t-[0.5px] border-graphite px-3 py-2.5 sm:grid-cols-4">
         <MetaReadout label="Hydration" value={`${state.hydrationPercent}%`} />
         <MetaReadout
           label="Loading"
