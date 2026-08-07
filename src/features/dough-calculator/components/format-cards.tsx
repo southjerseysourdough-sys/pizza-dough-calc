@@ -97,7 +97,7 @@ export function FormatCards({
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <fieldset className="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-2 lg:grid-cols-1">
+    <fieldset className="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-2">
       <legend className="sr-only">Pizza format</legend>
 
       {FORMATS.map(({ value: format, title, detail, Glyph }) => {

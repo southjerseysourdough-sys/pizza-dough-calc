@@ -25,6 +25,8 @@ export type SteelProfile = {
 export type PanProfile = {
   readonly id: string;
   readonly name: string;
+  /** Short label for the size chips, where the full name will not fit. */
+  readonly shortName: string;
   /** Nominal outer size as sold, in inches. */
   readonly nominalLengthInches: number;
   readonly nominalWidthInches: number;

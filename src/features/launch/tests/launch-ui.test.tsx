@@ -33,13 +33,17 @@ describe("launch interface", () => {
   it("supports Back and Skip and persists completion", async () => {
     const onClose = vi.fn();
     const { user } = renderWithProviders(<OnboardingPanel onClose={onClose} />);
-    expect(screen.getByText("Choose your format")).toBeInTheDocument();
+    expect(
+      screen.getByText("Step 1 — Round pizza or pan pizza?")
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /back/i })).toBeDisabled();
 
     await user.click(screen.getByRole("button", { name: /next/i }));
-    expect(screen.getByText("Enter size and quantity")).toBeInTheDocument();
+    expect(screen.getByText("Step 2 — Pick a size")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /back/i }));
-    expect(screen.getByText("Choose your format")).toBeInTheDocument();
+    expect(
+      screen.getByText("Step 1 — Round pizza or pan pizza?")
+    ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /skip/i }));
 
     expect(localStorage.getItem(ONBOARDING_STORAGE_KEY)).toBe("complete");
@@ -52,12 +56,12 @@ describe("launch interface", () => {
       <OnboardingPanel explicit onClose={onClose} />
     );
     expect(
-      screen.getByRole("heading", { name: /choose your format/i })
+      screen.getByRole("heading", { name: /round pizza or pan pizza/i })
     ).toHaveFocus();
 
     for (let step = 0; step < 4; step += 1)
       await user.click(screen.getByRole("button", { name: /next/i }));
-    expect(screen.getByText("Keep or bake it")).toBeInTheDocument();
+    expect(screen.getByText("Then keep or bake it")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /finish/i }));
     expect(onClose).toHaveBeenCalledOnce();
   });

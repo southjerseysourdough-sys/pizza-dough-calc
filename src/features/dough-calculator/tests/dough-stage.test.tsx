@@ -41,7 +41,7 @@ describe("visualizer state for round mode", () => {
     expect(state.shape).toBe("round");
     expect(state.diameterInches).toBe(16);
     expect(state.hydrationPercent).toBe(63);
-    expect(state.totalDoughWeightGrams).toBeCloseTo(562.9734, 3);
+    expect(state.totalDoughWeightGrams).toBeCloseTo(480, 1);
     expect(state.quantity).toBe(1);
   });
 
@@ -106,11 +106,9 @@ describe("SVG Dough Field", () => {
     const { container } = renderWithProviders(<DoughCalculator />);
 
     expect(container.querySelector("canvas")).toBeNull();
-    expect(recipeRegion()).toHaveTextContent("563 g");
+    expect(recipeRegion()).toHaveTextContent("480 g");
     expect(recipeRegion()).toHaveTextContent(/flour/i);
-    expect(
-      screen.getByRole("spinbutton", { name: /pizza diameter/i })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /16/ })).toBeChecked();
   });
 
   it("still renders the full SVG under reduced motion", () => {
@@ -127,7 +125,7 @@ describe("SVG Dough Field", () => {
 
     expect(field).toHaveAttribute("data-diameter", "16");
     expect(field).toHaveAttribute("data-hydration", "63");
-    expect(field).toHaveAttribute("data-loading", "2.8");
+    expect(field).toHaveAttribute("data-loading", "2.39");
     expect(field).toHaveAttribute("data-quantity", "1");
     expect(field).toHaveAttribute("data-total");
   });
@@ -138,10 +136,10 @@ describe("the headline result", () => {
     renderWithProviders(<DoughCalculator />);
 
     const stage = screen.getByRole("region", { name: /dough lab/i });
-    // Responsive stage variants are mutually exclusive in CSS: the compact
-    // result is used below lg and the measurement column at lg and above.
-    expect(within(stage).getAllByText(/total dough/i)).toHaveLength(2);
-    expect(stage).toHaveTextContent("563 g");
+    // One running total, shown at every width — the stage no longer keeps
+    // separate compact and wide copies of the same number.
+    expect(within(stage).getAllByText(/total dough/i)).toHaveLength(1);
+    expect(stage).toHaveTextContent("480 g");
   });
 
   it("leads the recipe with the total, before any detail", () => {
@@ -149,8 +147,8 @@ describe("the headline result", () => {
 
     const text = recipeRegion().textContent ?? "";
     // The headline weight appears before the ledger disclosure.
-    expect(text.indexOf("563 g")).toBeGreaterThanOrEqual(0);
-    expect(text.indexOf("563 g")).toBeLessThan(
+    expect(text.indexOf("480 g")).toBeGreaterThanOrEqual(0);
+    expect(text.indexOf("480 g")).toBeLessThan(
       text.indexOf("Full ingredient ledger")
     );
   });
@@ -183,8 +181,8 @@ describe("ingredient composition", () => {
     expect(within(composition).getByText("Flour")).toBeInTheDocument();
     expect(within(composition).getByText("Water")).toBeInTheDocument();
     expect(within(composition).getByText("Salt")).toBeInTheDocument();
-    expect(composition).toHaveTextContent("334 g");
-    expect(composition).toHaveTextContent("210 g");
+    expect(composition).toHaveTextContent("285 g");
+    expect(composition).toHaveTextContent("179 g");
   });
 
   it("keeps the bar itself out of the accessibility tree", () => {

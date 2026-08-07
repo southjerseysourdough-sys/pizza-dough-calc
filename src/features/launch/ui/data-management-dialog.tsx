@@ -236,7 +236,7 @@ export function DataManagementDialog({
             onClick={() => {
               resetOnboarding();
               setMessage(
-                "Quick Start will appear again on the next calculator load."
+                "Quick Start progress cleared. Reopen it any time from Help."
               );
             }}
           >

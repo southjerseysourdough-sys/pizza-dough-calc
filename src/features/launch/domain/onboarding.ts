@@ -35,31 +35,37 @@ export function resetOnboarding(storage?: Storage): boolean {
   }
 }
 
+/**
+ * The tour mirrors the numbered steps on the page one for one, so the
+ * walkthrough and the interface never describe two different workflows.
+ */
 export const ONBOARDING_STEPS = [
   {
-    title: "Choose your format",
-    detail: "Start with a round pizza or any pan pizza.",
+    title: "Step 1 — Round pizza or pan pizza?",
+    detail: "This decides which sizes and dough styles you are offered.",
     target: "format",
   },
   {
-    title: "Enter size and quantity",
-    detail: "The calculator scales dough from the baking area you enter.",
+    title: "Step 2 — Pick a size",
+    detail:
+      'Standard sizes are one tap. A 16" pizza is the standard 480 g dough ball.',
     target: "geometry",
   },
   {
-    title: "Choose your dough",
+    title: "Step 3 — Say how many",
+    detail: "Enter your target number of pizzas and everything scales to it.",
+    target: "quantity",
+  },
+  {
+    title: "Step 4 — Choose your dough",
     detail:
-      "Set hydration and choose instant dry yeast or starter. More controls are there when you need them.",
+      "Pick a style and set hydration. Advanced options are there when you want them.",
     target: "formula",
   },
   {
-    title: "Plan fermentation",
-    detail: "Planning backward from bake time is the easiest place to start.",
-    target: "fermentation",
-  },
-  {
-    title: "Keep or bake it",
-    detail: "Save, share, print, or start a focused Baking Day session.",
+    title: "Then keep or bake it",
+    detail:
+      "Your recipe sits at the end: save, share, print, or start a Baking Day session.",
     target: "actions",
   },
 ] as const;

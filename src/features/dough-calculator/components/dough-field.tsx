@@ -112,7 +112,13 @@ export function DoughField({
       data-length={state.interiorLengthInches}
       data-width={state.interiorWidthInches}
       data-hydration={state.hydrationPercent}
-      data-loading={state.doughLoadingGramsPerSquareInch}
+      // Rounded because a derived loading carries full float precision, and
+      // this attribute exists to be read, not to be calculated from.
+      data-loading={
+        Number.isFinite(state.doughLoadingGramsPerSquareInch)
+          ? state.doughLoadingGramsPerSquareInch.toFixed(2)
+          : undefined
+      }
       data-total={state.totalDoughWeightGrams}
       data-quantity={state.quantity}
       className={cn(

@@ -95,15 +95,15 @@ describe("custom ingredients in the recipe", () => {
   it("is included in the dough mass, so total flour drops", async () => {
     const { user } = renderWithProviders(<DoughCalculator />);
 
-    // 334 g of flour before the addition.
-    expect(recipeRegion()).toHaveTextContent("334 g");
+    // 285 g of flour before the addition.
+    expect(recipeRegion()).toHaveTextContent("285 g");
 
     await addMilkPowder(user);
 
     // The dough weight is unchanged, so adding an ingredient must take its
     // share from the flour.
-    expect(recipeRegion()).toHaveTextContent("563 g");
-    expect(recipeRegion()).not.toHaveTextContent("334 g");
+    expect(recipeRegion()).toHaveTextContent("480 g");
+    expect(recipeRegion()).not.toHaveTextContent("285 g");
   });
 
   it("shows its calculated weight in the editor", async () => {
@@ -111,8 +111,8 @@ describe("custom ingredients in the recipe", () => {
 
     await addMilkPowder(user);
 
-    // 3% of roughly 328 g of flour is about 10 g.
-    expect(within(customPanel()).getByText("10 g")).toBeInTheDocument();
+    // 3% of roughly 280 g of flour is about 8 g.
+    expect(within(customPanel()).getByText("8 g")).toBeInTheDocument();
   });
 });
 

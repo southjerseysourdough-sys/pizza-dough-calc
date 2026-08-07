@@ -4,7 +4,11 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import { PAN_PROFILES } from "../presets/equipment";
-import { DEFAULT_PRESET, findPreset } from "../presets/formulas";
+import {
+  DEFAULT_PRESET,
+  DEFAULT_PRESET_FOR_SHAPE,
+  findPreset,
+} from "../presets/formulas";
 import { presetToFormValues } from "../presets/preset-form-values";
 import type { CalculatorFormValues } from "../schemas/calculator-schema";
 import { type PizzaRecipeDocument } from "../domain/recipe-document";
@@ -75,30 +79,64 @@ export const useCalculatorStore = create<CalculatorState & CalculatorActions>()(
     (set) => ({
       ...initialState(),
 
-      applyPreset: (presetId) => {
-        const preset = findPreset(presetId);
-        if (!preset) return;
+      applyPreset: (presetId) =>
+        set((state) => {
+          const preset = findPreset(presetId);
+          if (!preset) return {};
 
-        set({
-          presetId,
-          values: presetToFormValues(preset),
-          formatMode:
-            preset.input.sizing.shape === "round" ? "round" : "sheet-pan",
-          surfaceId: preset.surface,
-          panProfileId: preset.panProfileId ?? "half-sheet-13x18",
-          // A new pan means the previous measurement no longer applies.
-          panInteriorMeasured: false,
-        });
-      },
+          const next = presetToFormValues(preset);
+          // Choosing a dough style must not undo the size and batch the baker
+          // already set two steps earlier. A preset carries a formula and a
+          // dough loading; the geometry stays theirs whenever the shape has
+          // not changed underneath it.
+          const keepsGeometry = next.shape === state.values.shape;
+
+          return {
+            presetId,
+            values: keepsGeometry
+              ? {
+                  ...next,
+                  diameterInches: state.values.diameterInches,
+                  usableInteriorLengthInches:
+                    state.values.usableInteriorLengthInches,
+                  usableInteriorWidthInches:
+                    state.values.usableInteriorWidthInches,
+                  quantity: state.values.quantity,
+                }
+              : next,
+            formatMode: next.shape === "round" ? "round" : "sheet-pan",
+            surfaceId: preset.surface,
+            panProfileId: keepsGeometry
+              ? state.panProfileId
+              : (preset.panProfileId ?? "half-sheet-13x18"),
+            // A new pan means the previous measurement no longer applies.
+            panInteriorMeasured: keepsGeometry
+              ? state.panInteriorMeasured
+              : false,
+          };
+        }),
 
       setFormatMode: (formatMode) =>
-        set((state) => ({
-          formatMode,
-          values: {
-            ...state.values,
-            shape: formatMode === "round" ? "round" : "rectangular",
-          },
-        })),
+        set((state) => {
+          const shape = formatMode === "round" ? "round" : "rectangular";
+          if (shape === state.values.shape) return { formatMode };
+
+          // The old shape's dough loading is meaningless against the new one:
+          // 2.39 g/in² is a New York pie and a cracker in a sheet pan. Land on
+          // the format's own starting preset, keeping only the batch size,
+          // which is about the baker rather than about the dough.
+          const preset = DEFAULT_PRESET_FOR_SHAPE[shape];
+          const next = presetToFormValues(preset);
+
+          return {
+            formatMode,
+            presetId: preset.id,
+            values: { ...next, quantity: state.values.quantity },
+            surfaceId: preset.surface,
+            panProfileId: preset.panProfileId ?? "half-sheet-13x18",
+            panInteriorMeasured: false,
+          };
+        }),
 
       setValues: (patch) =>
         set((state) => ({ values: { ...state.values, ...patch } })),

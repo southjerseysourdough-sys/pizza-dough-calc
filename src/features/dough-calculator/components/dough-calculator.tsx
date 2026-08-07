@@ -4,7 +4,6 @@ import { CalendarClockIcon, WrenchIcon } from "lucide-react";
 import dynamic from "next/dynamic";
 
 import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
 import {
   useCalculatorPersistence,
   useDoughCalculation,
@@ -12,51 +11,28 @@ import {
 import { PAN_PROFILES, STEEL_PROFILES } from "../presets/equipment";
 import { findPreset } from "../presets/formulas";
 import { useCalculatorStore } from "../store/calculator-store";
-import { formatPercentage, formatTotalWeight } from "../utils/format";
+import { formatTotalWeight } from "../utils/format";
 import { createRecipeDraftDocument } from "../utils/recipe-draft";
 import { useRecipeLibraryStore } from "../store/recipe-library-store";
 import { CustomIngredientEditor } from "./custom-ingredient-editor";
 import { DoughStage } from "./dough-stage";
 import { FlourBlendEditor } from "./flour-blend-editor";
+import { FormatCards } from "./format-cards";
 import { FormulaControls } from "./formula-controls";
 import { IssueList } from "./issue-list";
+import { QuantityStepper } from "./quantity-stepper";
 import { RecipeSummary } from "./recipe-summary";
 import { RecipeStatus } from "./recipe-status";
 import { SizeControls } from "./size-controls";
+import { StepSection } from "./step-section";
 import { LaunchTools } from "@/features/launch/ui/launch-tools";
 
 const FermentationPlanner = dynamic(() =>
   import("./fermentation-planner").then((module) => module.FermentationPlanner)
 );
 
-function Bench({
-  title,
-  eyebrow,
-  children,
-  className,
-}: {
-  title: string;
-  eyebrow: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <section
-      className={cn(
-        "border-b-[0.5px] border-graphite p-5 last:border-b-0 sm:p-6",
-        className
-      )}
-    >
-      <div className="mb-5 flex flex-col gap-1">
-        <span className="font-mono text-[10px] tracking-[0.12em] text-muted-foreground uppercase">
-          {eyebrow}
-        </span>
-        <h2 className="text-base font-medium text-foreground">{title}</h2>
-      </div>
-      {children}
-    </section>
-  );
-}
+/** The anchor the stage's "start here" link points at. */
+const FIRST_STEP_ID = "step-1";
 
 function DetailBlock({
   title,
@@ -80,32 +56,14 @@ function DetailBlock({
   );
 }
 
-function CommandValue({
-  label,
-  value,
-  className,
-}: {
-  label: string;
-  value: string;
-  className?: string;
-}) {
-  return (
-    <div
-      className={cn(
-        "flex min-w-0 flex-col justify-center gap-0.5 border-l-[0.5px] border-graphite px-3 py-2.5 first:border-l-0",
-        className
-      )}
-    >
-      <span className="font-mono text-[9px] tracking-[0.08em] text-muted-foreground uppercase">
-        {label}
-      </span>
-      <span className="tabular truncate text-xs text-secondary-foreground">
-        {value}
-      </span>
-    </div>
-  );
-}
-
+/**
+ * The calculator, as one path from start to finish.
+ *
+ * Shape, size, batch, dough — four steps in the order a baker actually makes
+ * those decisions, each numbered, with the result at the end. The advanced
+ * toggle adds precision controls inside the steps that own them rather than
+ * opening a separate parallel interface.
+ */
 export function DoughCalculator() {
   useCalculatorPersistence();
 
@@ -115,6 +73,7 @@ export function DoughCalculator() {
   const showAdvanced = useCalculatorStore((state) => state.showAdvanced);
   const setShowAdvanced = useCalculatorStore((state) => state.setShowAdvanced);
   const values = useCalculatorStore((state) => state.values);
+  const setValues = useCalculatorStore((state) => state.setValues);
   const surfaceId = useCalculatorStore((state) => state.surfaceId);
   const panProfileId = useCalculatorStore((state) => state.panProfileId);
   const panInteriorMeasured = useCalculatorStore(
@@ -137,6 +96,7 @@ export function DoughCalculator() {
   const errors = calculation.ok ? [] : calculation.issues;
   const summaryWarnings = surfaceWarning ? [surfaceWarning] : [];
   const isRound = values.shape === "round";
+  const unitNoun = isRound ? "pizza" : "pan";
   const equipmentName = isRound
     ? (STEEL_PROFILES.find((surface) => surface.id === surfaceId)?.name ??
       "Custom surface")
@@ -158,112 +118,137 @@ export function DoughCalculator() {
     <div className="mx-auto flex w-full max-w-[84rem] flex-col gap-4 px-4 pb-16 sm:px-6">
       <DoughStage
         values={values}
-        formatMode={formatMode}
-        onFormatChange={setFormatMode}
         result={result}
-        presetName={preset?.name ?? ""}
+        startHref={`#${FIRST_STEP_ID}`}
       />
 
       <RecipeStatus />
 
       <LaunchTools document={recipeDocument.ok ? recipeDocument.value : null} />
 
-      <section
-        aria-label="Current recipe command strip"
-        className="surface-workbench grid grid-cols-2 overflow-hidden sm:grid-cols-4 lg:grid-cols-8"
-      >
-        <CommandValue
-          label="Profile"
-          value={preset?.name ?? "Custom"}
-          className="col-span-2 border-l-0"
-        />
-        <CommandValue label="Shape" value={isRound ? "Round" : "Sheet pan"} />
-        <CommandValue
-          label="Dough each"
-          value={
-            result
-              ? formatTotalWeight(result.sizing.doughWeightPerUnitGrams)
-              : "—"
-          }
-        />
-        <CommandValue
-          label="Hydration"
-          value={formatPercentage(values.hydrationPercent / 100)}
-        />
-        <CommandValue label="Quantity" value={`× ${values.quantity}`} />
-        <button
-          type="button"
-          aria-label="Open fermentation planner"
-          className="flex min-h-13 min-w-0 items-center gap-2 border-l-[0.5px] border-graphite px-3 py-2.5 text-left hover:bg-inset focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none"
-          aria-expanded={fermentationWorkspaceOpen}
-          onClick={() => setFermentationWorkspaceOpen(true)}
-        >
-          <CalendarClockIcon
-            aria-hidden="true"
-            className="size-3.5 shrink-0 text-acid-lime"
-          />
-          <span className="min-w-0">
-            <span className="block font-mono text-[9px] tracking-[0.08em] text-muted-foreground uppercase">
-              Fermentation
-            </span>
-            <span className="block truncate text-xs text-secondary-foreground">
-              {fermentationPlan?.enabled ? "Planned" : "Set schedule"}
-            </span>
-          </span>
-        </button>
-        <label className="flex min-w-0 cursor-pointer items-center justify-between gap-2 border-l-[0.5px] border-graphite px-3 py-2.5">
-          <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="font-mono text-[9px] tracking-[0.08em] text-muted-foreground uppercase">
-              More controls
-            </span>
-            <span className="text-xs text-secondary-foreground">
-              {showAdvanced ? "On" : "Off"}
-            </span>
-          </span>
-          <Switch
-            checked={showAdvanced}
-            onCheckedChange={setShowAdvanced}
-            aria-label="Advanced controls"
-          />
-        </label>
-      </section>
-
-      {fermentationWorkspaceOpen && recipeDocument.ok ? (
-        <FermentationPlanner document={recipeDocument.value} />
-      ) : null}
-
       <div className="grid gap-4 lg:grid-cols-12">
-        <div className="order-2 flex flex-col gap-4 lg:order-1 lg:col-span-7 xl:col-span-8">
+        <div className="flex min-w-0 flex-col gap-4 lg:col-span-7 xl:col-span-8">
           <div className="surface-workbench overflow-hidden">
-            <div data-onboarding-target="geometry">
-              <Bench eyebrow="01 / Size" title="How much pizza are you making?">
-                <SizeControls sizing={result?.sizing ?? null} />
-              </Bench>
-            </div>
+            <StepSection
+              id={FIRST_STEP_ID}
+              step={1}
+              title="Round pizza or pan pizza?"
+              hint="This decides which sizes and dough styles you are offered."
+              data-onboarding-target="format"
+            >
+              <FormatCards value={formatMode} onChange={setFormatMode} />
+            </StepSection>
 
-            <div data-onboarding-target="formula">
-              <Bench eyebrow="02 / Dough" title="Choose your dough">
-                <FormulaControls />
-              </Bench>
-            </div>
+            <StepSection
+              step={2}
+              title={isRound ? "What size?" : "Which pan?"}
+              hint={
+                isRound
+                  ? "A 16 inch pizza is the standard 480 g dough ball."
+                  : "Pick the pan you own, then measure its flat inside surface."
+              }
+              data-onboarding-target="geometry"
+            >
+              <SizeControls />
+            </StepSection>
+
+            <StepSection
+              step={3}
+              title={`How many ${unitNoun}s are you making?`}
+              hint="Everything below scales to this number."
+              data-onboarding-target="quantity"
+            >
+              <div className="flex flex-col gap-3 sm:max-w-sm">
+                <QuantityStepper
+                  label={isRound ? "Number of pizzas" : "Number of pans"}
+                  value={values.quantity}
+                  unitNoun={unitNoun}
+                  onChange={(quantity) => setValues({ quantity })}
+                />
+                {result ? (
+                  <p className="tabular text-sm text-secondary-foreground">
+                    {formatTotalWeight(result.sizing.doughWeightPerUnitGrams)}{" "}
+                    each ·{" "}
+                    <span className="font-semibold text-foreground">
+                      {formatTotalWeight(result.sizing.totalDoughWeightGrams)}{" "}
+                      total
+                    </span>
+                  </p>
+                ) : null}
+              </div>
+            </StepSection>
+
+            <StepSection
+              step={4}
+              title="Choose your dough"
+              hint="Pick a style, then adjust how wet the dough is."
+              data-onboarding-target="formula"
+            >
+              <FormulaControls />
+            </StepSection>
           </div>
+
+          <div className="surface-workbench flex flex-col divide-y-[0.5px] divide-graphite overflow-hidden">
+            <button
+              type="button"
+              aria-label="Open fermentation planner"
+              aria-expanded={fermentationWorkspaceOpen}
+              onClick={() => setFermentationWorkspaceOpen(true)}
+              data-onboarding-target="fermentation"
+              className="flex min-h-13 items-center gap-3 px-5 py-3.5 text-left hover:bg-inset focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none sm:px-6"
+            >
+              <CalendarClockIcon
+                aria-hidden="true"
+                className="size-4 shrink-0 text-acid-lime"
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium text-foreground">
+                  Plan the fermentation
+                </span>
+                <span className="block truncate text-xs text-muted-foreground">
+                  Optional — schedule mix and bake times.
+                </span>
+              </span>
+              <span className="shrink-0 text-xs text-muted-foreground">
+                {fermentationPlan?.enabled ? "Planned" : "Set schedule"}
+              </span>
+            </button>
+
+            <label className="flex min-h-13 cursor-pointer items-center gap-3 px-5 py-3.5 sm:px-6">
+              <WrenchIcon
+                aria-hidden="true"
+                className="size-4 shrink-0 text-muted-foreground"
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium text-foreground">
+                  Advanced options
+                </span>
+                <span className="block truncate text-xs text-muted-foreground">
+                  Salt, yeast, oil, flour blend, dough thickness.
+                </span>
+              </span>
+              <Switch
+                checked={showAdvanced}
+                onCheckedChange={setShowAdvanced}
+                aria-label="Advanced options"
+              />
+            </label>
+          </div>
+
+          {fermentationWorkspaceOpen && recipeDocument.ok ? (
+            <FermentationPlanner document={recipeDocument.value} />
+          ) : null}
 
           {showAdvanced ? (
             <div className="surface-workbench overflow-hidden motion-safe:animate-in motion-safe:duration-200 motion-safe:fade-in motion-safe:slide-in-from-top-1">
               <div className="flex items-center justify-between border-b-[0.5px] border-graphite px-5 py-4 sm:px-6">
-                <div className="flex items-center gap-2">
-                  <WrenchIcon
-                    aria-hidden="true"
-                    className="size-3.5 text-acid-lime"
-                  />
-                  <div className="flex flex-col">
-                    <span className="font-mono text-[9px] tracking-[0.1em] text-acid-lime uppercase">
-                      Precision layer
-                    </span>
-                    <h2 className="text-base font-medium">
-                      Advanced configuration
-                    </h2>
-                  </div>
+                <div className="flex flex-col">
+                  <span className="font-mono text-[9px] tracking-[0.1em] text-acid-lime uppercase">
+                    Precision layer
+                  </span>
+                  <h2 className="text-base font-medium">
+                    Flour blend and extras
+                  </h2>
                 </div>
                 <span className="hidden rounded-sm border-[0.5px] border-graphite px-2 py-1 font-mono text-[9px] text-muted-foreground sm:block">
                   FLOUR · EXTRAS
@@ -300,7 +285,12 @@ export function DoughCalculator() {
           ) : null}
         </div>
 
-        <aside className="order-1 lg:order-2 lg:col-span-5 xl:col-span-4">
+        {/*
+          A grid item defaults to min-width:auto, so without min-w-0 the widest
+          unbreakable content in the recipe panel sets the column width and
+          pushes the whole page into horizontal scroll on a phone.
+        */}
+        <aside className="min-w-0 lg:col-span-5 xl:col-span-4">
           <div className="flex flex-col gap-3 lg:sticky lg:top-[4.25rem]">
             {errors.length > 0 || fieldErrors.length > 0 ? (
               <section className="surface-workbench p-5">

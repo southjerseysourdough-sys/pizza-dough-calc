@@ -109,12 +109,12 @@ describe("reduced motion", () => {
 
     // Nothing may be gated behind an animation completing.
     expect(recipeRegion()).toBeInTheDocument();
-    expect(recipeRegion()).toHaveTextContent("563 g");
+    expect(recipeRegion()).toHaveTextContent("480 g");
     expect(
       screen.getByRole("radio", { name: /round pizza/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("spinbutton", { name: /pizza diameter/i })
+      screen.getByRole("spinbutton", { name: /number of pizzas/i })
     ).toBeInTheDocument();
   });
 

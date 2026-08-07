@@ -194,11 +194,11 @@ describe("blend weights", () => {
     await user.type(shares[1], "20");
 
     // The per-flour split lives in the ledger alongside the other exact
-    // figures, so open it. 334 g of added flour splits 267 / 67.
+    // figures, so open it. 285 g of added flour splits 228 / 57.
     await openLedger(user);
     expect(recipeRegion()).toHaveTextContent(/semolina/i);
-    expect(recipeRegion()).toHaveTextContent("267 g");
-    expect(recipeRegion()).toHaveTextContent("67 g");
+    expect(recipeRegion()).toHaveTextContent("228 g");
+    expect(recipeRegion()).toHaveTextContent("57 g");
   });
 
   it("reports the flour accounting breakdown", () => {

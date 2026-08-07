@@ -1,8 +1,19 @@
 # Pizza Dough Calc
 
-A precision workspace for planning and scaling pizza dough by baking area,
-with round-steel and sheet-pan modes, baker&rsquo;s percentages, sourdough,
-instant dry yeast, and optional hybrid formulas.
+A pizza dough calculator that runs as one numbered path — round or pan, what
+size, how many, which dough — with the finished recipe at the end. The default
+view asks only what a home baker needs; baker&rsquo;s percentages, flour
+blends, custom ingredients, dough loading and surface fit checks all sit behind
+a single **Advanced options** toggle.
+
+Round sizes are anchored to one standard: **a 16&Prime; pizza is a 480 g dough
+ball**. Every other diameter — 9&Prime; through 18&Prime; — applies that same
+dough loading to its own area, so the crust stays the same thickness as the pie
+grows. Pan formats cover half sheet, cookie sheet, small sheet and 9&Prime; x
+13&Prime;, plus any pan you measure.
+
+Underneath, it is still a precision workspace: baking-area sizing, baker&rsquo;s
+percentages, sourdough, instant dry yeast, and optional hybrid formulas.
 
 Recipes can be named and saved locally, reopened, renamed, duplicated, shared
 by URL, copied as readable text, moved as versioned JSON, printed, or exported

@@ -3,6 +3,7 @@ import type {
   DoughFormulaInput,
   PizzaStyle,
 } from "../types/dough";
+import { STANDARD_ROUND_DOUGH_LOADING } from "./sizes";
 
 /**
  * Starting-point formulas.
@@ -19,6 +20,8 @@ import type {
 export type CalculatorPreset = {
   readonly id: string;
   readonly name: string;
+  /** Short label for the style chips, where the full name will not fit. */
+  readonly shortName: string;
   readonly style: PizzaStyle;
   readonly description: string;
   /** Subjective choices behind this preset, surfaced in the interface. */
@@ -30,13 +33,15 @@ export type CalculatorPreset = {
 
 export const NEW_YORK_ON_STEEL: CalculatorPreset = {
   id: "new-york-steel",
+  shortName: "New York",
   name: "New York on Baking Steel Plus",
   style: "new-york",
   surface: "baking-steel-plus",
   description:
     "A moderately hydrated, lightly enriched dough for a thin, foldable slice.",
   assumptions: [
-    "2.80 g/in² gives about 563 g of dough for a 16 inch pie, a common New York dough ball weight.",
+    "A 16 inch pie gets a 480 g dough ball — the standard size this calculator is built around.",
+    "Every other diameter uses the same dough loading, so the crust stays the same thickness as the pie grows.",
     "A little oil and sugar aid browning at home-oven temperatures.",
     "Diastatic malt is optional; it is included at a low level for crust colour.",
   ],
@@ -47,8 +52,8 @@ export const NEW_YORK_ON_STEEL: CalculatorPreset = {
       quantity: 1,
       selection: {
         mode: "dough-loading",
-        // 2.80 g/in² x (pi x 8²) in² = about 563 g for a 16 inch pie.
-        doughLoadingGramsPerSquareInch: 2.8,
+        // Derived from the 480 g / 16" anchor: about 2.39 g/in².
+        doughLoadingGramsPerSquareInch: STANDARD_ROUND_DOUGH_LOADING,
       },
     },
     hydration: 0.63,
@@ -71,6 +76,7 @@ export const NEW_YORK_ON_STEEL: CalculatorPreset = {
 
 export const NEAPOLITAN_INSPIRED_HOME_OVEN: CalculatorPreset = {
   id: "neapolitan-inspired-home-oven",
+  shortName: "Neapolitan",
   name: "Neapolitan inspired, home oven",
   style: "neapolitan-inspired-home-oven",
   surface: "baking-steel-plus",
@@ -112,6 +118,7 @@ export const NEAPOLITAN_INSPIRED_HOME_OVEN: CalculatorPreset = {
 
 export const SICILIAN_SHEET_PAN: CalculatorPreset = {
   id: "sicilian-sheet-pan",
+  shortName: "Sicilian",
   name: "Sicilian in a half sheet pan",
   style: "sicilian",
   surface: "sheet-pan",
@@ -155,6 +162,7 @@ export const SICILIAN_SHEET_PAN: CalculatorPreset = {
 
 export const GRANDMA_SHEET_PAN: CalculatorPreset = {
   id: "grandma-sheet-pan",
+  shortName: "Grandma",
   name: "Grandma in a half sheet pan",
   style: "grandma",
   surface: "sheet-pan",
@@ -193,8 +201,51 @@ export const GRANDMA_SHEET_PAN: CalculatorPreset = {
   },
 };
 
+export const COOKIE_SHEET: CalculatorPreset = {
+  id: "cookie-sheet",
+  shortName: "Cookie sheet",
+  name: "Cookie sheet pizza",
+  style: "grandma",
+  surface: "sheet-pan",
+  panProfileId: "cookie-sheet-12x15",
+  description:
+    "A thin, crisp-bottomed pan pizza on the flat baking sheet you already own.",
+  assumptions: [
+    "3.00 g/in² gives about 540 g of dough across a nominal 12 x 15 inch cookie sheet.",
+    "Thinner than the Grandma preset, because a rimless sheet cannot hold a tall dough.",
+    "Cookie sheet sizes vary more than sheet pans do, so measure yours and enter it.",
+  ],
+  input: {
+    sizing: {
+      shape: "rectangular",
+      usableInteriorLengthInches: 15,
+      usableInteriorWidthInches: 12,
+      quantity: 1,
+      selection: {
+        mode: "dough-loading",
+        // 3.00 g/in² x (15 x 12) in² = 540 g for a full sheet.
+        doughLoadingGramsPerSquareInch: 3,
+      },
+    },
+    hydration: 0.65,
+    salt: 0.02,
+    fatType: "olive-oil",
+    fat: 0.03,
+    sugar: 0.005,
+    malt: 0,
+    leavening: {
+      method: "commercial-yeast",
+      yeastType: "instant-dry",
+      yeastPercentage: 0.0025,
+    },
+    customIngredients: [],
+    flourBlend: [{ id: "bread-flour", name: "Bread flour", percentage: 1 }],
+  },
+};
+
 export const CUSTOM_ROUND: CalculatorPreset = {
   id: "custom-round",
+  shortName: "Custom round",
   name: "Custom round pizza",
   style: "custom",
   surface: "custom",
@@ -232,6 +283,7 @@ export const CUSTOM_ROUND: CalculatorPreset = {
 
 export const CUSTOM_RECTANGULAR: CalculatorPreset = {
   id: "custom-rectangular",
+  shortName: "Custom pan",
   name: "Custom pan pizza",
   style: "custom",
   surface: "sheet-pan",
@@ -273,12 +325,39 @@ export const CALCULATOR_PRESETS: readonly CalculatorPreset[] = [
   NEAPOLITAN_INSPIRED_HOME_OVEN,
   SICILIAN_SHEET_PAN,
   GRANDMA_SHEET_PAN,
+  COOKIE_SHEET,
   CUSTOM_ROUND,
   CUSTOM_RECTANGULAR,
 ];
 
 export const DEFAULT_PRESET = NEW_YORK_ON_STEEL;
 
+/**
+ * Where each format starts.
+ *
+ * A round dough loading applied to a sheet pan is not a pan pizza, so
+ * switching format has to land on a preset built for the new shape rather
+ * than carrying the old thickness across.
+ */
+export const DEFAULT_PRESET_FOR_SHAPE = {
+  round: NEW_YORK_ON_STEEL,
+  rectangular: SICILIAN_SHEET_PAN,
+} as const;
+
 export function findPreset(id: string): CalculatorPreset | undefined {
   return CALCULATOR_PRESETS.find((preset) => preset.id === id);
+}
+
+/**
+ * The presets offered for a given format.
+ *
+ * The style step only ever shows doughs that make sense for the shape already
+ * chosen, so a baker making a round pizza is never asked to consider Sicilian.
+ */
+export function presetsForShape(
+  shape: "round" | "rectangular"
+): readonly CalculatorPreset[] {
+  return CALCULATOR_PRESETS.filter(
+    (preset) => preset.input.sizing.shape === shape
+  );
 }

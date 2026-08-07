@@ -66,6 +66,7 @@ export const PAN_PROFILES: readonly PanProfile[] = [
   {
     id: "half-sheet-13x18",
     name: 'Half sheet pan (nominal 13" x 18")',
+    shortName: "Half sheet",
     nominalLengthInches: 18,
     nominalWidthInches: 13,
     usableInteriorLengthInches: 18,
@@ -74,8 +75,25 @@ export const PAN_PROFILES: readonly PanProfile[] = [
     isRimmed: true,
   },
   {
+    /**
+     * A cookie sheet is the flat, rimless (or single-lip) tray most home
+     * kitchens already own. Sizes vary more than sheet pans do, so this is a
+     * common large size used as a starting point, not a standard.
+     */
+    id: "cookie-sheet-12x15",
+    name: 'Cookie sheet (nominal 12" x 15")',
+    shortName: "Cookie sheet",
+    nominalLengthInches: 15,
+    nominalWidthInches: 12,
+    usableInteriorLengthInches: 15,
+    usableInteriorWidthInches: 12,
+    isInteriorMeasured: false,
+    isRimmed: false,
+  },
+  {
     id: "quarter-sheet-10x15",
     name: 'Sheet pan (nominal 10" x 15")',
+    shortName: "Small sheet",
     nominalLengthInches: 15,
     nominalWidthInches: 10,
     usableInteriorLengthInches: 15,
@@ -86,6 +104,7 @@ export const PAN_PROFILES: readonly PanProfile[] = [
   {
     id: "rectangular-9x13",
     name: 'Rectangular pan (nominal 9" x 13")',
+    shortName: '9" x 13"',
     nominalLengthInches: 13,
     nominalWidthInches: 9,
     usableInteriorLengthInches: 13,
@@ -96,6 +115,7 @@ export const PAN_PROFILES: readonly PanProfile[] = [
   {
     id: "custom-pan",
     name: "Custom pan",
+    shortName: "Custom",
     nominalLengthInches: 0,
     nominalWidthInches: 0,
     usableInteriorLengthInches: 0,

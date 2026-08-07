@@ -150,48 +150,6 @@ export function RecipeSummary({
         aria-atomic="false"
         className="flex flex-col p-5 sm:p-6"
       >
-        {document ? (
-          <div className="mb-5 flex flex-col gap-3 border-b-[0.5px] border-graphite pb-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="font-mono text-[9px] tracking-[0.1em] text-muted-foreground uppercase">
-                  Recipe identity
-                </p>
-                <p className="mt-1 truncate text-sm font-medium text-foreground">
-                  {document.name}
-                </p>
-              </div>
-              <FormulaSignature
-                data={createFormulaSignatureData(document.calculatorInput)}
-                animateSignal
-                className="size-16"
-              />
-            </div>
-            <DeferredRecipeActions document={document} />
-            {timeline?.ok ? (
-              <div className="grid grid-cols-2 gap-x-3 gap-y-2 border-t-[0.5px] border-graphite pt-3 text-[10px]">
-                <ScheduleFact
-                  label="Mix"
-                  value={formatTimelineTimestamp(timeline.value.mixTimestamp)}
-                />
-                <ScheduleFact
-                  label="Bake"
-                  value={formatTimelineTimestamp(timeline.value.bakeTimestamp)}
-                />
-                <ScheduleFact
-                  label="Elapsed"
-                  value={formatTimelineDuration(
-                    timeline.value.totalDurationMinutes
-                  )}
-                />
-                <ScheduleFact
-                  label="Cold / timezone"
-                  value={`${formatTimelineDuration(document.fermentationPlan?.coldFermentMinutes ?? 0)} · ${document.fermentationPlan?.timezone}`}
-                />
-              </div>
-            ) : null}
-          </div>
-        ) : null}
         <div className="flex items-center justify-between gap-3">
           <h2
             id="recipe-summary-heading"
@@ -205,7 +163,7 @@ export function RecipeSummary({
         </div>
 
         {/* LAYER ONE — the headline. */}
-        <div className="sr-only lg:not-sr-only lg:mt-4 lg:flex lg:flex-col lg:gap-1">
+        <div className="mt-4 flex flex-col gap-1">
           <AnimatedNumber
             value={result.totalDoughWeightGrams}
             format={formatTotalWeight}
@@ -368,6 +326,48 @@ export function RecipeSummary({
             </div>
           ) : null}
         </div>
+        {document ? (
+          <div className="mt-5 flex flex-col gap-3 border-t-[0.5px] border-graphite pt-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-mono text-[9px] tracking-[0.1em] text-muted-foreground uppercase">
+                  Keep this recipe
+                </p>
+                <p className="mt-1 truncate text-sm font-medium text-foreground">
+                  {document.name}
+                </p>
+              </div>
+              <FormulaSignature
+                data={createFormulaSignatureData(document.calculatorInput)}
+                animateSignal
+                className="size-16"
+              />
+            </div>
+            <DeferredRecipeActions document={document} />
+            {timeline?.ok ? (
+              <div className="grid grid-cols-2 gap-x-3 gap-y-2 border-t-[0.5px] border-graphite pt-3 text-[10px]">
+                <ScheduleFact
+                  label="Mix"
+                  value={formatTimelineTimestamp(timeline.value.mixTimestamp)}
+                />
+                <ScheduleFact
+                  label="Bake"
+                  value={formatTimelineTimestamp(timeline.value.bakeTimestamp)}
+                />
+                <ScheduleFact
+                  label="Elapsed"
+                  value={formatTimelineDuration(
+                    timeline.value.totalDurationMinutes
+                  )}
+                />
+                <ScheduleFact
+                  label="Cold / timezone"
+                  value={`${formatTimelineDuration(document.fermentationPlan?.coldFermentMinutes ?? 0)} · ${document.fermentationPlan?.timezone}`}
+                />
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </section>
     </BorderGlow>
   );

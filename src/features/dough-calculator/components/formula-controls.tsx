@@ -8,11 +8,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { presetsForShape } from "../presets/formulas";
 import { useCalculatorStore } from "../store/calculator-store";
 import type { FatType, LeaveningMethod } from "../types/dough";
 import { NumericField } from "./numeric-field";
+import { ChoiceChips } from "./step-section";
 
 /**
+ * The dough step: which style, how wet, what raises it.
+ *
  * The beginner path exposes only decisions with an obvious recipe impact.
  * Baker's-percentage tuning remains available in the precision layer.
  */
@@ -30,9 +34,27 @@ const LEAVENING_LABELS: Record<LeaveningMethod, string> = {
   hybrid: "Starter + yeast (advanced)",
 };
 
+/**
+ * Plain-language read of a hydration figure.
+ *
+ * Percentages mean nothing to someone making their first dough; how the dough
+ * will feel in their hands does. The bands are rules of thumb for pizza dough,
+ * not thresholds the calculator enforces.
+ */
+function hydrationFeel(hydrationPercent: number): string {
+  if (!Number.isFinite(hydrationPercent)) return "";
+  if (hydrationPercent < 58) return "Stiff dough — easy to handle, crisp crust";
+  if (hydrationPercent < 65)
+    return "Classic dough — stretches without fighting";
+  if (hydrationPercent < 72) return "Soft dough — open, airy crumb";
+  return "Wet dough — sticky, worth wet hands and a bench scraper";
+}
+
 export function FormulaControls() {
   const values = useCalculatorStore((state) => state.values);
   const setValues = useCalculatorStore((state) => state.setValues);
+  const presetId = useCalculatorStore((state) => state.presetId);
+  const applyPreset = useCalculatorStore((state) => state.applyPreset);
   const showAdvanced = useCalculatorStore((state) => state.showAdvanced);
 
   const usesYeast = values.leaveningMethod !== "sourdough";
@@ -41,16 +63,41 @@ export function FormulaControls() {
     ? Object.entries(LEAVENING_LABELS)
     : Object.entries(LEAVENING_LABELS).filter(([value]) => value !== "hybrid");
 
+  const availablePresets = presetsForShape(values.shape);
+  const activePreset = availablePresets.find(
+    (preset) => preset.id === presetId
+  );
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-2">
+        <ChoiceChips
+          name="dough-style"
+          legend="Dough style"
+          value={presetId}
+          options={availablePresets.map((preset) => ({
+            value: preset.id,
+            label: preset.shortName,
+          }))}
+          onChange={applyPreset}
+          className="grid-cols-[repeat(auto-fit,minmax(7rem,1fr))]"
+        />
+        {activePreset ? (
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            {activePreset.description}
+          </p>
+        ) : null}
+      </div>
+
       <NumericField
         label="Hydration"
         unit="%"
         value={values.hydrationPercent}
         min={45}
-        max={100}
+        max={95}
         step={0.5}
-        hint="More water makes a softer, more open dough."
+        showRange
+        hint={hydrationFeel(values.hydrationPercent)}
         help={{
           term: "Hydration",
           definition: "The total formula water divided by total formula flour.",
@@ -88,7 +135,7 @@ export function FormulaControls() {
         </Select>
         <p className="text-xs leading-relaxed text-muted-foreground">
           {usesYeast
-            ? `The recipe uses instant dry yeast. The ${values.yeastPercent}% amount comes from your selected profile.`
+            ? `The recipe uses instant dry yeast. The ${values.yeastPercent}% amount comes from your selected style.`
             : "The calculator subtracts the flour and water already present in your starter."}
         </p>
       </div>

@@ -39,12 +39,20 @@ test("onboarding persists and keyboard and touch commands perform real work", as
   await page.evaluate(() => localStorage.clear());
   await page.reload();
 
+  // The calculator is a numbered flow, so nothing pops up over it on arrival.
+  // Quick Start is opt-in, from Help.
   const onboarding = page.locator("[data-onboarding]");
+  await expect(onboarding).toHaveCount(0);
+
+  await page.keyboard.press("Control+k");
+  await page.getByRole("combobox", { name: "Search commands" }).fill("Help");
+  await page.getByRole("option", { name: /open help/i }).click();
+  await page.getByRole("button", { name: /reopen quick start/i }).click();
+
   await expect(onboarding).toBeVisible();
   await onboarding.getByRole("button", { name: "Next" }).click();
-  await expect(onboarding).toContainText("Enter size and quantity");
+  await expect(onboarding).toContainText("Step 2 — Pick a size");
   await onboarding.getByRole("button", { name: "Skip" }).click();
-  await page.reload();
   await expect(onboarding).toHaveCount(0);
 
   await page.keyboard.press("Control+k");

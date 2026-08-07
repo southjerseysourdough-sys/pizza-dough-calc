@@ -32,6 +32,20 @@ The existing Button source was retained when the registry installer offered to o
 
 These are domain compositions rather than replacement control primitives. They reuse Button, Dialog, Dropdown Menu, Input, and Tooltip behavior from the shared UI layer.
 
+### Guided step flow
+
+Added when the calculator was rebuilt as one numbered path (shape → size → batch → dough) with a result at the end.
+
+- `StepSection`: a numbered step wrapper — marker, heading, hint, and an anchor target so the stage can link straight to step 1.
+- `ChoiceChips`: a compact single-choice row built on native `input[type=radio]` inside a `fieldset`, so arrow-key movement, `checked` state, and set-position announcements come from the browser.
+- `QuantityStepper`: the batch target, as a wide typeable field between two 48 px tap targets.
+
+No registry component was adopted for these. Candidates considered and rejected:
+
+- **shadcn Toggle Group / Radio Group** — already covered by a plain radio `fieldset` here, and adding a second selection primitive alongside the existing `FormatCards` radios would mean two libraries solving one job.
+- **Animate UI / React Bits steppers and wizards** — every one found is a _paged_ wizard that hides steps behind Next/Back. The whole point of this layout is that all four steps and the live result stay on one screen, so their central behaviour is the one behaviour we do not want.
+- **Number-input spinners from the registries** — heavier than `Input` plus two buttons, and the project already owns the draft-text editing behaviour in `NumericField` that a stepper has to match.
+
 ## Configured registries
 
 | Namespace      | URL template                               | Used                                                |

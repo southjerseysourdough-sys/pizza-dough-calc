@@ -6,7 +6,6 @@ import { useEffect, useRef, useState } from "react";
 import type { PizzaRecipeDocument } from "@/features/dough-calculator/domain/recipe-document";
 import { useCalculatorStore } from "@/features/dough-calculator/store/calculator-store";
 import { useRecipeLibraryStore } from "@/features/dough-calculator/store/recipe-library-store";
-import { hasCompletedOnboarding } from "../domain/onboarding";
 import { LAUNCH_EVENT, type LaunchAction } from "./launch-events";
 
 const CommandPalette = dynamic(() =>
@@ -56,12 +55,7 @@ export function LaunchTools({
     };
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener(LAUNCH_EVENT, onAction);
-
-    const idle = window.setTimeout(() => {
-      if (!hasCompletedOnboarding()) setShowOnboarding(true);
-    }, 900);
     return () => {
-      window.clearTimeout(idle);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener(LAUNCH_EVENT, onAction);
     };
